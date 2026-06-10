@@ -43,6 +43,7 @@ class Equipment:
             "max_hp": 0, "attack": 0, "defense": 0,
             "crit_rate": 0.0, "crit_damage": 0.0, "skill_damage": 0.0,
             "hp_regen": 0, "resource_regen": 0,
+            "move_speed": 0, "move_speed_pct": 0.0,
         }
         for affix in self.affixes:
             if affix.stat_key in bonus:
@@ -57,11 +58,12 @@ class Equipment:
         mult = 1 + forge_level * forge_percent
         result = dict(raw)
         for key in PERCENT_AFFIX_KEYS:
-            if key in result:
+            # 移速百分比不随锻造放大（避免叠加爆表）。
+            if key in result and key != "move_speed_pct":
                 result[key] = result[key] * mult
         for key in ("attack", "defense", "max_hp", "hp_regen", "resource_regen"):
             if key in result:
-                result[key] = int(result[key] * mult) if key != "max_hp" else int(result[key] * mult)
+                result[key] = int(result[key] * mult)
         return result
 
     def summary(self) -> str:
@@ -117,11 +119,23 @@ def _generate_name(slot: str, rarity: str) -> str:
     return f"{prefix}{slot_cn}"
 
 
+# 移速词缀单独控制：不随楼层膨胀，且设上限（避免角色瞬移、手感失控）。
+MOVE_AFFIX_KEYS = frozenset({"move_speed", "move_speed_pct"})
+MOVE_SPEED_FLAT_CAP = 60      # 固定移速上限（像素/秒）
+MOVE_SPEED_PCT_CAP = 0.40     # 百分比移速上限（40%）
+
+
 def _calc_affix_value(stat_key: str, floor: int, rarity: str) -> float:
     _, is_percent, (lo, hi) = AFFIX_DEFINITIONS[stat_key]
     mult = RARITIES[rarity]["value_mult"]
-    floor_scale = 1 + floor * 0.12
 
+    if stat_key in MOVE_AFFIX_KEYS:
+        raw = random.uniform(lo, hi) * mult  # 仅吃稀有度倍率，不吃楼层
+        if is_percent:
+            return max(0.01, round(min(raw, MOVE_SPEED_PCT_CAP), 3))
+        return max(1, min(int(round(raw)), MOVE_SPEED_FLAT_CAP))
+
+    floor_scale = 1 + floor * 0.12
     if is_percent:
         raw = random.uniform(lo, hi) * mult * floor_scale
         return max(0.01, round(raw, 3))

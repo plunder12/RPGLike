@@ -14,6 +14,8 @@ class StatBlock:
     skill_damage: float = 0.0
     hp_regen: int = 0
     resource_regen: int = 0
+    move_speed: int = 0          # 固定移速（像素/秒）
+    move_speed_pct: float = 0.0  # 百分比移速加成
 
     def copy(self) -> "StatBlock":
         return deepcopy(self)
@@ -28,7 +30,13 @@ class StatBlock:
             skill_damage=self.skill_damage + other.skill_damage,
             hp_regen=self.hp_regen + other.hp_regen,
             resource_regen=self.resource_regen + other.resource_regen,
+            move_speed=self.move_speed + other.move_speed,
+            move_speed_pct=self.move_speed_pct + other.move_speed_pct,
         )
+
+    @property
+    def effective_move_speed(self) -> int:
+        return int(self.move_speed * (1 + self.move_speed_pct))
 
     def scale_level(self, level: int, growth: dict) -> "StatBlock":
         if level <= 1:

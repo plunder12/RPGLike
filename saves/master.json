@@ -2,12 +2,12 @@
   "name": "master",
   "class_id": "barbarian",
   "level": 5,
-  "exp": 187,
+  "exp": 222,
   "hp": 297,
-  "resource": 29,
+  "resource": 49,
   "floor": 9,
   "highest_floor": 8,
-  "gold": 145,
+  "gold": 157,
   "skill_points": 0,
   "skill_ranks": {
     "basic_attack": 1,
@@ -22,7 +22,12 @@
     "boots": 0,
     "ring": 0
   },
-  "forge_materials": 5,
+  "forge_materials": {
+    "普通": 10,
+    "稀有": 0,
+    "史诗": 0,
+    "传说": 0
+  },
   "bonus_hp": 16,
   "bonus_attack": 4,
   "bonus_defense": 2,
@@ -174,6 +179,32 @@
           "stat_key": "max_hp",
           "display_name": "生命",
           "value": 6
+        }
+      ]
+    },
+    {
+      "slot": "weapon",
+      "name": "长剑",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.153
+        }
+      ]
+    },
+    {
+      "slot": "ring",
+      "name": "钢戒指",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "defense",
+          "display_name": "防御",
+          "value": 18
         }
       ]
     }

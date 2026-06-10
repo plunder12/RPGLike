@@ -139,6 +139,8 @@ class Character:
             equip_bonus.skill_damage += bonus["skill_damage"]
             equip_bonus.hp_regen += int(bonus["hp_regen"])
             equip_bonus.resource_regen += int(bonus["resource_regen"])
+            equip_bonus.move_speed += int(bonus["move_speed"])
+            equip_bonus.move_speed_pct += bonus["move_speed_pct"]
 
         passive = self._passive_bonus_dict()
         pass_block = StatBlock(

@@ -41,7 +41,7 @@ RARITIES = {
 }
 
 # 百分比类词缀（锻造加成适用）
-PERCENT_AFFIX_KEYS = frozenset({"crit_rate", "crit_damage", "skill_damage"})
+PERCENT_AFFIX_KEYS = frozenset({"crit_rate", "crit_damage", "skill_damage", "move_speed_pct"})
 
 # 各部位允许词缀 — hp_regen/resource_regen 仅装备/技能获得
 SLOT_AFFIX_ALLOWED: dict[str, tuple[str, ...]] = {
@@ -49,7 +49,7 @@ SLOT_AFFIX_ALLOWED: dict[str, tuple[str, ...]] = {
     "helm": ("defense", "max_hp", "crit_rate", "hp_regen"),
     "chest": ("defense", "max_hp", "hp_regen"),
     "gloves": ("attack", "crit_rate", "skill_damage", "resource_regen"),
-    "boots": ("defense", "max_hp", "hp_regen"),
+    "boots": ("defense", "max_hp", "hp_regen", "move_speed", "move_speed_pct"),
     "ring": (
         "attack", "defense", "max_hp",
         "crit_rate", "crit_damage", "skill_damage",
@@ -67,6 +67,8 @@ AFFIX_DEFINITIONS = {
     "skill_damage": ("技能伤害", True, (0.06, 0.15)),
     "hp_regen": ("每回合回血", False, (3, 10)),
     "resource_regen": ("每回合回能", False, (4, 12)),
+    "move_speed": ("移速", False, (8, 20)),
+    "move_speed_pct": ("移速", True, (0.04, 0.10)),
 }
 
 BASE_EXP = 100

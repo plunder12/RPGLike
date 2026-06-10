@@ -1,5 +1,7 @@
 """游戏控制器 — CLI / Web 共用业务层。"""
 
+import random
+
 from config.classes import get_class_config, list_classes
 from config.constants import EQUIPMENT_SLOTS, MAX_FLOOR, SLOT_NAMES
 from config.forge import FORGE_SLOT_CONFIG, format_material_bag
@@ -62,6 +64,177 @@ class GameController:
 
     def delete_character(self, name: str) -> bool:
         return self.save_mgr.delete(name)
+
+    def rest_character(self, name: str) -> dict:
+        """回城休息：满血满资源，存档，返回角色数据。"""
+        char = self._require_char(name)
+        char.heal_full()
+        char.resource = char.resource_max
+        self.save_mgr.save(char)
+        return self.character_to_api(char)
+
+    def clear_floor(self, name: str, floor: int, mode: str, kills: list[dict]) -> dict:
+        """实时战斗结算：按击杀列表发放奖励，推进层数，存档。"""
+        from config.constants import get_drop_chance, roll_forge_material_drops, INVENTORY_MAX
+        from models.equipment import generate_equipment
+
+        char = self._require_char(name)
+        is_farm = mode == "farm"
+
+        total_exp = 0
+        total_gold = 0
+        total_mats: dict[str, int] = {}
+        added_drops: list[dict] = []
+        overflow = 0
+
+        for kill in kills:
+            is_boss = bool(kill.get("is_boss", False))
+            is_elite = bool(kill.get("is_elite", False))
+
+            exp = int(25 * (1.18 ** floor))
+            if is_elite:
+                exp = int(exp * 1.5)
+            if is_boss:
+                exp = int(exp * 2.5)
+            if is_farm:
+                exp = int(exp * 0.5)
+            total_exp += exp
+
+            gold = int(10 + floor * 3 * (1.1 if is_boss else 1))
+            if is_farm:
+                gold = int(gold * 0.5)
+            total_gold += gold
+
+            mats = roll_forge_material_drops(floor, is_boss, is_elite)
+            for k, v in mats.items():
+                total_mats[k] = total_mats.get(k, 0) + v
+
+            drop_chance = get_drop_chance(is_boss, is_elite)
+            if random.random() < drop_chance:
+                loot = generate_equipment(floor)
+                if len(char.inventory) < INVENTORY_MAX:
+                    char.inventory.append(loot)
+                    added_drops.append({"summary": loot.summary(), "rarity": loot.rarity})
+                else:
+                    overflow += 1
+
+        level_msgs = char.add_exp(total_exp)
+        char.gold += total_gold
+        char.add_materials(total_mats)
+
+        if not is_farm:
+            char.highest_floor = max(char.highest_floor, floor)
+            char.floor = min(floor + 1, MAX_FLOOR + 1)
+
+        char.heal_full()
+        self.save_mgr.save(char)
+
+        return {
+            "total_exp": total_exp,
+            "total_gold": total_gold,
+            "total_materials": total_mats,
+            "drops": added_drops,
+            "overflow_count": overflow,
+            "level_msgs": level_msgs,
+            "new_floor": char.floor,
+            "character": self.character_to_api(char),
+        }
+
+    def start_floor(self, name: str, target_floor: int | None = None) -> dict:
+        """为实时战斗准备本层怪物配置（不结算，仅生成数据）。"""
+        from config.constants import BOSS_FLOOR_INTERVAL, get_available_rarities
+        from models.monster import generate_monster
+
+        char = self._require_char(name)
+        if target_floor is None:
+            target_floor = min(char.floor, MAX_FLOOR)
+        target_floor = max(1, min(target_floor, MAX_FLOOR))
+        is_replay = target_floor < char.floor
+        is_boss_floor = target_floor % BOSS_FLOOR_INTERVAL == 0
+
+        monsters = []
+        if is_boss_floor:
+            boss = generate_monster(target_floor)
+            monsters.append(self._monster_to_api(boss, mid=0))
+            adds = 2 + target_floor // 20
+            for i in range(adds):
+                m = generate_monster(target_floor)
+                m.is_boss = False
+                m.is_elite = False
+                m.max_hp = int(m.max_hp * 0.35)
+                m.hp = m.max_hp
+                m.attack = int(m.attack * 0.6)
+                monsters.append(self._monster_to_api(m, mid=i + 1))
+        else:
+            count = random.randint(5, 8)
+            for i in range(count):
+                m = generate_monster(target_floor)
+                monsters.append(self._monster_to_api(m, mid=i))
+
+        return {
+            "floor": target_floor,
+            "mode": "farm" if is_replay else "push",
+            "is_boss_floor": is_boss_floor,
+            "rarities": get_available_rarities(target_floor),
+            "monsters": monsters,
+            "character": self.character_to_api(char),
+            "active_skills": self._skills_to_api(char),
+        }
+
+    def _skills_to_api(self, char) -> list[dict]:
+        """把角色已学主动技能转换为前端实时战斗格式。"""
+        from config.skills import get_class_skill_tree, resolve_active_skill
+
+        KEYS = ["Q", "E", "R", "F"]
+        result = []
+        key_idx = 0
+        for tmpl in get_class_skill_tree(char.class_id):
+            if tmpl.skill_type != "active":
+                continue
+            rank = char.get_skill_rank(tmpl.id)
+            if rank <= 0:
+                continue
+            eff = resolve_active_skill(tmpl, rank)
+            # 范围类型：决定前端施放方式与特效
+            if "aoe" in tmpl.tags:
+                range_type = "aoe"
+            elif eff.get("heal_ratio", 0) > 0:
+                range_type = "heal"
+            elif eff.get("buff_damage", 0) > 0:
+                range_type = "buff"
+            elif "spell" in tmpl.tags:
+                range_type = "ranged"
+            else:
+                range_type = "melee"
+            result.append({
+                "id": tmpl.id,
+                "name": tmpl.name,
+                "rank": rank,
+                "key": KEYS[key_idx] if key_idx < len(KEYS) else None,
+                "cd_ms": int(eff.get("cooldown", tmpl.cooldown) * 1200),
+                "resource_cost": int(eff.get("resource_cost", tmpl.resource_cost)),
+                "damage_multiplier": float(eff.get("damage_multiplier", tmpl.damage_multiplier)),
+                "heal_ratio": float(eff.get("heal_ratio", tmpl.heal_ratio)),
+                "buff_damage": float(eff.get("buff_damage", tmpl.buff_damage)),
+                "control_reduction": float(eff.get("control_reduction", tmpl.control_reduction)),
+                "tags": list(tmpl.tags),
+                "range_type": range_type,
+            })
+            key_idx += 1
+        return result
+
+    def _monster_to_api(self, monster, mid: int) -> dict:
+        return {
+            "id": mid,
+            "name": monster.name,
+            "max_hp": monster.max_hp,
+            "hp": monster.hp,
+            "attack": monster.attack,
+            "defense": monster.defense,
+            "is_elite": monster.is_elite,
+            "is_boss": monster.is_boss,
+            "tag": monster.tag,
+        }
 
     def run_battle(self, name: str, target_floor: int | None = None) -> dict:
         char = self._require_char(name)
@@ -221,6 +394,8 @@ class GameController:
             "materials": dict(char.forge_materials),
             "materials_summary": char.materials_summary,
             "resource_name": char.resource_name,
+            "resource": char.resource,
+            "resource_max": char.resource_max,
             "stats": {
                 "hp": char.hp,
                 "max_hp": stats.max_hp,
@@ -231,6 +406,7 @@ class GameController:
                 "skill_damage": round(stats.skill_damage, 4),
                 "hp_regen": stats.hp_regen,
                 "resource_regen": stats.resource_regen,
+                "move_speed": stats.effective_move_speed,
             },
             "equipment": equipment,
             "inventory": inventory,

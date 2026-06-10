@@ -13,6 +13,8 @@ STAT_LABELS = [
     ("skill_damage", "技能伤", True),
     ("hp_regen", "每回合回血", False),
     ("resource_regen", "每回合回能", False),
+    ("move_speed", "移速", False),
+    ("move_speed_pct", "移速%", True),
 ]
 
 
@@ -70,6 +72,8 @@ def equipment_power_score(bonus: dict) -> float:
         + bonus.get("skill_damage", 0) * 400
         + bonus.get("hp_regen", 0) * 3
         + bonus.get("resource_regen", 0) * 3
+        + bonus.get("move_speed", 0) * 1.0
+        + bonus.get("move_speed_pct", 0) * 200
     )
 
 

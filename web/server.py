@@ -25,6 +25,17 @@ class BattleReq(BaseModel):
     target_floor: int | None = None
 
 
+class KillEntry(BaseModel):
+    is_boss: bool = False
+    is_elite: bool = False
+
+
+class FloorClearReq(BaseModel):
+    floor: int
+    mode: str = "push"
+    kills: list[KillEntry] = []
+
+
 class SkillReq(BaseModel):
     skill_id: str
 
@@ -75,6 +86,33 @@ def api_battle(name: str, body: BattleReq | None = None):
     try:
         floor = body.target_floor if body else None
         return game.run_battle(name, target_floor=floor)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/characters/{name}/floor/start")
+def api_floor_start(name: str, body: BattleReq | None = None):
+    try:
+        floor = body.target_floor if body else None
+        return game.start_floor(name, target_floor=floor)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/characters/{name}/rest")
+def api_rest(name: str):
+    """回城休息：满血/满资源并存档，返回最新角色数据。"""
+    try:
+        return game.rest_character(name)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/characters/{name}/floor/clear")
+def api_floor_clear(name: str, body: FloorClearReq):
+    try:
+        kills = [{"is_boss": k.is_boss, "is_elite": k.is_elite} for k in body.kills]
+        return game.clear_floor(name, body.floor, body.mode, kills)
     except ValueError as e:
         raise HTTPException(400, str(e))
 
@@ -162,6 +200,11 @@ def api_forge(name: str, body: ForgeReq):
 @app.get("/")
 def index():
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/game")
+def game_page():
+    return FileResponse(STATIC_DIR / "game" / "index.html")
 
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
