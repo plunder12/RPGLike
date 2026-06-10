@@ -1,0 +1,28 @@
+{
+  "name": "Sorcerer",
+  "class_id": "wizard",
+  "level": 1,
+  "exp": 29,
+  "hp": 80,
+  "resource": 37,
+  "floor": 2,
+  "highest_floor": 1,
+  "gold": 13,
+  "equipment": {
+    "weapon": null,
+    "helm": null,
+    "chest": null,
+    "gloves": null,
+    "boots": null,
+    "ring": null
+  },
+  "inventory": [
+    {
+      "slot": "helm",
+      "name": "奥术头盔",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": []
+    }
+  ]
+}

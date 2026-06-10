@@ -1,0 +1,189 @@
+{
+  "name": "11",
+  "class_id": "wizard",
+  "level": 13,
+  "exp": 4301,
+  "hp": 2550,
+  "resource": 192,
+  "floor": 26,
+  "highest_floor": 25,
+  "gold": 1063,
+  "skill_points": 0,
+  "skill_ranks": {
+    "basic_attack": 1,
+    "fireball": 3,
+    "arcane_blast": 2,
+    "arcane_power": 3,
+    "frost_nova": 2,
+    "mana_flow": 2
+  },
+  "forge_levels": {
+    "weapon": 10,
+    "helm": 2,
+    "chest": 0,
+    "gloves": 4,
+    "boots": 0,
+    "ring": 0
+  },
+  "forge_materials": {
+    "普通": 33,
+    "稀有": 37,
+    "史诗": 39,
+    "传说": 0
+  },
+  "bonus_hp": 60,
+  "bonus_attack": 24,
+  "bonus_defense": 0,
+  "bonus_resource": 72,
+  "equipment": {
+    "weapon": {
+      "slot": "weapon",
+      "name": "巨锤",
+      "rarity": "魔法",
+      "floor": 25,
+      "affixes": [
+        {
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.527
+        },
+        {
+          "stat_key": "crit_damage",
+          "display_name": "暴击伤害",
+          "value": 0.978
+        },
+        {
+          "stat_key": "crit_rate",
+          "display_name": "暴击率",
+          "value": 0.209
+        }
+      ]
+    },
+    "helm": {
+      "slot": "helm",
+      "name": "不朽头盔",
+      "rarity": "稀有",
+      "floor": 22,
+      "affixes": [
+        {
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 683
+        },
+        {
+          "stat_key": "crit_rate",
+          "display_name": "暴击率",
+          "value": 0.41
+        },
+        {
+          "stat_key": "defense",
+          "display_name": "防御",
+          "value": 64
+        },
+        {
+          "stat_key": "hp_regen",
+          "display_name": "每回合回血",
+          "value": 85
+        }
+      ]
+    },
+    "chest": {
+      "slot": "chest",
+      "name": "不朽胸甲",
+      "rarity": "稀有",
+      "floor": 22,
+      "affixes": [
+        {
+          "stat_key": "defense",
+          "display_name": "防御",
+          "value": 65
+        },
+        {
+          "stat_key": "hp_regen",
+          "display_name": "每回合回血",
+          "value": 44
+        },
+        {
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 542
+        }
+      ]
+    },
+    "gloves": {
+      "slot": "gloves",
+      "name": "不朽手套",
+      "rarity": "稀有",
+      "floor": 22,
+      "affixes": [
+        {
+          "stat_key": "attack",
+          "display_name": "攻击",
+          "value": 278
+        },
+        {
+          "stat_key": "crit_rate",
+          "display_name": "暴击率",
+          "value": 0.684
+        },
+        {
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.549
+        },
+        {
+          "stat_key": "resource_regen",
+          "display_name": "每回合回能",
+          "value": 79
+        }
+      ]
+    },
+    "boots": {
+      "slot": "boots",
+      "name": "钢靴子",
+      "rarity": "稀有",
+      "floor": 22,
+      "affixes": [
+        {
+          "stat_key": "defense",
+          "display_name": "防御",
+          "value": 150
+        },
+        {
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 693
+        },
+        {
+          "stat_key": "hp_regen",
+          "display_name": "每回合回血",
+          "value": 55
+        }
+      ]
+    },
+    "ring": {
+      "slot": "ring",
+      "name": "奥术戒指",
+      "rarity": "稀有",
+      "floor": 22,
+      "affixes": [
+        {
+          "stat_key": "defense",
+          "display_name": "防御",
+          "value": 101
+        },
+        {
+          "stat_key": "attack",
+          "display_name": "攻击",
+          "value": 177
+        },
+        {
+          "stat_key": "resource_regen",
+          "display_name": "每回合回能",
+          "value": 68
+        }
+      ]
+    }
+  },
+  "inventory": []
+}

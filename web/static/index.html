@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>文字暗黑 · 无限爬塔</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>文字暗黑 · 无限爬塔</h1>
+      <p class="subtitle">Web 版 · 复用 Python 核心逻辑</p>
+    </header>
+
+    <!-- 标题页 -->
+    <section id="view-title" class="panel">
+      <h2>选择冒险者</h2>
+      <div id="char-list" class="card-list"></div>
+      <div class="form-row">
+        <input id="new-name" placeholder="新角色名" maxlength="20" />
+        <select id="new-class"></select>
+        <button id="btn-create">创建角色</button>
+      </div>
+      <p id="title-msg" class="msg"></p>
+    </section>
+
+    <!-- 游戏主界面 -->
+    <section id="view-game" class="panel hidden">
+      <div class="hub-top">
+        <div>
+          <h2 id="hero-title"></h2>
+          <p id="hero-sub" class="muted"></p>
+        </div>
+        <button id="btn-back" class="btn-ghost">返回选角</button>
+      </div>
+
+      <div class="stats-grid" id="stats-grid"></div>
+
+      <nav class="tabs">
+        <button data-tab="tower" class="active">爬塔</button>
+        <button data-tab="inventory">背包</button>
+        <button data-tab="skills">技能</button>
+        <button data-tab="forge">锻造</button>
+      </nav>
+
+      <div id="tab-tower" class="tab-panel">
+        <div class="actions">
+          <button id="btn-battle-push" class="btn-primary">推进爬塔</button>
+          <label>回顾刷层 <input type="number" id="farm-floor" min="1" value="1" /></label>
+          <button id="btn-battle-farm">刷层</button>
+        </div>
+      </div>
+
+      <div id="tab-inventory" class="tab-panel hidden">
+        <div class="bulk-actions">
+          <button id="btn-sell-all">一键售卖</button>
+          <button id="btn-dismantle-all">一键分解</button>
+        </div>
+        <div id="equipped-list" class="list"></div>
+        <h3>背包</h3>
+        <div id="inventory-list" class="list"></div>
+      </div>
+
+      <div id="tab-skills" class="tab-panel hidden">
+        <p>技能点: <strong id="skill-points">0</strong>
+          <button id="btn-reset-skills" class="btn-ghost sm">重置全部</button>
+        </p>
+        <div id="skill-list" class="list"></div>
+      </div>
+
+      <div id="tab-forge" class="tab-panel hidden">
+        <p class="muted">材料: <span id="forge-mats"></span></p>
+        <div id="forge-list" class="list"></div>
+      </div>
+
+      <p id="game-msg" class="msg"></p>
+    </section>
+
+    <!-- 战斗弹层 -->
+    <div id="battle-overlay" class="overlay hidden">
+      <div class="battle-modal panel">
+        <h2 id="battle-title">战斗中</h2>
+        <div class="bars">
+          <div class="bar-row">
+            <span>我方</span>
+            <div class="bar-track"><div id="bar-player" class="bar-fill player"></div></div>
+            <span id="bar-player-text"></span>
+          </div>
+          <div class="bar-row">
+            <span id="bar-enemy-label">敌方</span>
+            <div class="bar-track"><div id="bar-enemy" class="bar-fill enemy"></div></div>
+            <span id="bar-enemy-text"></span>
+          </div>
+        </div>
+        <div id="battle-log" class="log"></div>
+        <div id="battle-result" class="result hidden"></div>
+        <button id="btn-close-battle" class="btn-primary hidden">继续</button>
+      </div>
+    </div>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
