@@ -1,6 +1,6 @@
 // DungeonScene：Phase 3 实时战斗 + 技能系统。
 //   移动：WASD / 方向键
-//   普攻：进入攻击圆范围自动攻击最近目标，左键点怪锁定，点空地取消锁定
+//   普攻：进入攻击圆范围内始终攻击距离最近的敌人（450ms 内置 CD，进出范围不重置）
 //   技能：Q / E / R / F 对应已学主动技能（按位置顺序绑定）
 //   资源：普攻回复，技能消耗，每秒按 resource_regen 回复
 //   HP  ：每秒按 hp_regen 回复
@@ -15,6 +15,7 @@ import {
   MAP_WIDTH,
   MAP_HEIGHT,
   BASIC_ATTACK_RANGE,
+  getAttackRange,
   SKILL_RANGES,
 } from "../constants.js";
 import { Api } from "../systems/apiClient.js";
@@ -34,6 +35,8 @@ export default class DungeonScene extends Phaser.Scene {
     this.targetFloor = data?.targetFloor ?? null;  // 来自 TownScene 的目标层
     const ms = this.character?.stats?.move_speed;
     this.playerSpeed = ms || PLAYER_SPEED;
+    const classId = this.character?.class_id ?? "barbarian";
+    this.attackRange = getAttackRange(classId);
 
     this.attackTarget = null;
     this.nextPlayerAttackAt = 0;
@@ -59,6 +62,9 @@ export default class DungeonScene extends Phaser.Scene {
   }
 
   create() {
+    // 防止上次暂停菜单遗留的 pause 状态导致场景卡死
+    if (this.scene.isPaused()) this.scene.resume();
+
     this.cameras.main.setBackgroundColor(COLORS.bg);
 
     this._buildMap();
@@ -66,7 +72,8 @@ export default class DungeonScene extends Phaser.Scene {
     this._setupCamera();
     this._setupInput();
 
-    // UIScene 先带角色数据启动（HUD），技能栏数据后补
+    // 重启 UIScene，避免残留暂停状态或重复监听
+    if (this.scene.isActive("UIScene")) this.scene.stop("UIScene");
     this.scene.launch("UIScene", { character: this.character, skills: this.skills });
 
     this._buildRangeCircle();
@@ -112,28 +119,17 @@ export default class DungeonScene extends Phaser.Scene {
     this.physics.add.collider(this.enemyGroup, this.walls);
     this.physics.add.collider(this.enemyGroup, this.enemyGroup);
     this.physics.add.overlap(this.player, this.enemyGroup);
-
-    this._buildRangeCircle();
   }
 
   _buildRangeCircle() {
-    if (this.rangeGfx) return;
-    this.rangeGfx = this.add.graphics().setDepth(400);
-    this._rangeActive = null;
-    this._redrawRangeCircle(false);
-  }
-
-  _redrawRangeCircle(active) {
-    this.rangeGfx.clear();
-    if (active) {
-      this.rangeGfx.lineStyle(1.5, 0xffd54a, 0.75);
-      this.rangeGfx.fillStyle(0xffd54a, 0.07);
-    } else {
-      this.rangeGfx.lineStyle(1, 0xffffff, 0.22);
-      this.rangeGfx.fillStyle(0xffffff, 0.03);
-    }
-    this.rangeGfx.fillCircle(0, 0, BASIC_ATTACK_RANGE);
-    this.rangeGfx.strokeCircle(0, 0, BASIC_ATTACK_RANGE);
+    if (this.rangeCircle?.active) return;
+    if (this.rangeCircle) this.rangeCircle.destroy();
+    const r = this.attackRange ?? BASIC_ATTACK_RANGE;
+    this.rangeCircle = this.add
+      .circle(0, 0, r, 0xffffff, 0.03)
+      .setStrokeStyle(1, 0xffffff, 0.22)
+      .setDepth(400);
+    this._rangeStyleActive = false;
   }
 
   _buildTargetIndicator() {
@@ -166,14 +162,18 @@ export default class DungeonScene extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys("W,A,S,D");
 
-    this.input.on("pointerdown", (pointer) => {
-      if (this.dead) return;
-      const world = pointer.positionToCamera(this.cameras.main);
-      const clicked = this._enemyNear(world.x, world.y);
-      this.attackTarget = clicked || null;
-    });
-
     // ESC 由 UIScene 的暂停菜单统一处理
+  }
+
+  shutdown() {
+    this.input.off("pointerdown");
+    if (this.regenTimer) {
+      this.regenTimer.destroy();
+      this.regenTimer = null;
+    }
+    this.rangeCircle?.destroy();
+    this.rangeCircle = null;
+    if (this.scene.isPaused()) this.scene.resume();
   }
 
   _bindSkillKeys() {
@@ -187,7 +187,7 @@ export default class DungeonScene extends Phaser.Scene {
     const cam = this.cameras.main;
     this.add
       .text(10, cam.height - 10,
-        "WASD 移动 · 自动攻击最近目标（金圈）· 左键锁定 · Q/E/R/F 技能 · ESC 返回", {
+        "WASD 移动 · 自动攻击最近目标（金圈）· Q/E/R/F 技能 · ESC 暂停", {
           fontFamily: "Microsoft YaHei, sans-serif",
           fontSize: "12px",
           color: "#9a9088",
@@ -245,7 +245,8 @@ export default class DungeonScene extends Phaser.Scene {
   // ── 回复计时器 ───────────────────────────────────────────
 
   _startRegenTimer() {
-    this.time.addEvent({
+    if (this.regenTimer) this.regenTimer.destroy();
+    this.regenTimer = this.time.addEvent({
       delay: 1000,
       loop: true,
       callback: () => {
@@ -291,16 +292,14 @@ export default class DungeonScene extends Phaser.Scene {
       this.buffDamage = 0;
     }
 
-    // 自动普攻：无手动目标时锁定范围内最近敌人
-    if (!this.attackTarget || !this.attackTarget.alive) {
-      this.attackTarget = this._nearestEnemyInRange();
-    }
+    // 自动普攻：每帧选取攻击范围内最近的敌人
+    this.attackTarget = this._nearestEnemyInRange();
     if (this.attackTarget?.alive) {
       const dist = Phaser.Math.Distance.Between(
         this.player.x, this.player.y,
         this.attackTarget.sprite.x, this.attackTarget.sprite.y
       );
-      if (dist <= BASIC_ATTACK_RANGE && time >= this.nextPlayerAttackAt) {
+      if (dist <= this.attackRange && time >= this.nextPlayerAttackAt) {
         this.nextPlayerAttackAt = time + PLAYER_ATTACK_CD;
         this._attack(this.attackTarget);
       }
@@ -326,7 +325,12 @@ export default class DungeonScene extends Phaser.Scene {
   // ── 普攻 ─────────────────────────────────────────────────
 
   _attack(target) {
-    this._slashFx(target);
+    const isRanged = this.attackRange > BASIC_ATTACK_RANGE + 20;
+    if (isRanged) {
+      this._projectileFx(this.player.x, this.player.y, target.sprite.x, target.sprite.y);
+    } else {
+      this._slashFx(target);
+    }
     const stats = this.character.stats;
     const { damage, crit } = playerHitDamage(stats, target.defense);
     target.takeDamage(damage);
@@ -365,6 +369,8 @@ export default class DungeonScene extends Phaser.Scene {
       this._castBuff(skill, time);
     } else if (skill.range_type === "aoe") {
       this._castAoe(skill);
+    } else if (skill.range_type === "explosion") {
+      this._castExplosion(skill);
     } else if (skill.range_type === "ranged") {
       this._castRanged(skill);
     } else {
@@ -423,6 +429,35 @@ export default class DungeonScene extends Phaser.Scene {
     this._projectileFx(this.player.x, this.player.y, target.sprite.x, target.sprite.y);
   }
 
+  /** 投射命中点爆炸：一次 roll 伤害，爆炸范围内所有敌人受到相同数值 */
+  _castExplosion(skill) {
+    const castRange = SKILL_RANGES.ranged;
+    const blastRange = SKILL_RANGES.explosion;
+    const target = (this.attackTarget?.alive ? this.attackTarget : null)
+      || this._nearestEnemyInRange(castRange);
+    if (!target) {
+      this._floatText(this.player.x, this.player.y - 10, "无目标", "#9a9088");
+      return;
+    }
+    const { damage, crit } = skillHitDamage(this.character.stats, skill, this.buffDamage);
+    const color = crit ? "#ffd54a" : "#ff7a3a";
+    this._fireballFx(this.player.x, this.player.y, target, (cx, cy) => {
+      let hit = 0;
+      for (const e of this.enemies) {
+        if (!e.alive) continue;
+        const d = Phaser.Math.Distance.Between(cx, cy, e.sprite.x, e.sprite.y);
+        if (d <= blastRange) {
+          e.takeDamage(damage);
+          this._floatText(e.sprite.x, e.sprite.y - 10,
+            crit ? `${damage}!` : `${damage}`, color, crit);
+          hit++;
+        }
+      }
+      this._explosionFx(cx, cy, blastRange);
+      if (hit === 0) this._floatText(cx, cy - 10, "未命中", "#9a9088");
+    });
+  }
+
   _castMelee(skill) {
     const range = SKILL_RANGES.melee;
     const target = (this.attackTarget?.alive ? this.attackTarget : null)
@@ -450,9 +485,19 @@ export default class DungeonScene extends Phaser.Scene {
   // ── 特效（占位） ─────────────────────────────────────────
 
   _aoeFx(x, y, range) {
-    const circle = this.add.circle(x, y, range, 0xff7a3a, 0.18).setDepth(940);
-    this.add.circle(x, y, range, 0, 0).setStrokeStyle(2, 0xff7a3a, 0.8).setDepth(941);
-    this.tweens.add({ targets: circle, alpha: 0, scale: 1.15, duration: 350, onComplete: () => circle.destroy() });
+    const fill = this.add.circle(x, y, range, 0xff7a3a, 0.18).setDepth(940);
+    const stroke = this.add.circle(x, y, range, 0, 0)
+      .setStrokeStyle(2, 0xff7a3a, 0.8).setDepth(941);
+    this.tweens.add({
+      targets: [fill, stroke],
+      alpha: 0,
+      scale: 1.15,
+      duration: 400,
+      onComplete: () => {
+        fill.destroy();
+        stroke.destroy();
+      },
+    });
   }
 
   _projectileFx(x, y, tx, ty) {
@@ -463,6 +508,38 @@ export default class DungeonScene extends Phaser.Scene {
         const burst = this.add.circle(tx, ty, 14, 0x4a90e2, 0.5).setDepth(951);
         this.tweens.add({ targets: burst, scale: 1.8, alpha: 0, duration: 180, onComplete: () => { burst.destroy(); ball.destroy(); } });
       }
+    });
+  }
+
+  _fireballFx(x, y, target, onHit) {
+    const ball = this.add.circle(x, y, 8, 0xff5522, 1).setDepth(950);
+    this.tweens.add({
+      targets: ball,
+      x: target.sprite.x,
+      y: target.sprite.y,
+      duration: 240,
+      onComplete: () => {
+        const cx = ball.x;
+        const cy = ball.y;
+        ball.destroy();
+        if (onHit) onHit(cx, cy);
+      },
+    });
+  }
+
+  _explosionFx(x, y, range) {
+    const fill = this.add.circle(x, y, range, 0xff5522, 0.22).setDepth(940);
+    const stroke = this.add.circle(x, y, range, 0, 0)
+      .setStrokeStyle(2, 0xffaa44, 0.85).setDepth(941);
+    this.tweens.add({
+      targets: [fill, stroke],
+      alpha: 0,
+      scale: 1.2,
+      duration: 350,
+      onComplete: () => {
+        fill.destroy();
+        stroke.destroy();
+      },
     });
   }
 
@@ -572,7 +649,9 @@ export default class DungeonScene extends Phaser.Scene {
     btn.on("pointerover", () => btn.setStyle({ backgroundColor: "#e8c040" }));
     btn.on("pointerout", () => btn.setStyle({ backgroundColor: "#c9a227" }));
     btn.on("pointerdown", () => {
-      panel.destroy(); btn.destroy();
+      if (this.scene.isPaused()) this.scene.resume();
+      panel.destroy();
+      btn.destroy();
       this.scene.stop("UIScene");
       this.scene.start("TownScene", { character: this.character });
     });
@@ -590,26 +669,87 @@ export default class DungeonScene extends Phaser.Scene {
   }
 
   _onPlayerDead() {
+    if (this.dead) return;
     this.dead = true;
     this.player.body.setVelocity(0, 0);
-    this._banner("你已阵亡… 即将返回城镇", 2000);
-    this.time.delayedCall(2200, async () => {
-      // 从服务端重新取最新角色（死亡后服务端不自动恢复，这里只刷新UI）
-      try {
-        const char = await Api.getCharacter(this.character.name);
-        this.scene.stop("UIScene");
-        this.scene.start("TownScene", { character: char });
-      } catch {
-        this.scene.stop("UIScene");
-        this.scene.start("TownScene", { character: this.character });
-      }
+    this._showDefeatScreen();
+  }
+
+  _showDefeatScreen() {
+    const cam = this.cameras.main;
+    const W = 400, H = 220;
+    const px = (cam.width - W) / 2, py = (cam.height - H) / 2;
+    const DEPTH = 5000;
+    const FONT = "Microsoft YaHei, sans-serif";
+
+    const overlay = this.add.rectangle(cam.width / 2, cam.height / 2, cam.width, cam.height, 0x000000, 0.65)
+      .setScrollFactor(0).setDepth(DEPTH);
+    const panel = this.add.rectangle(px, py, W, H, 0x1a0e14, 0.98)
+      .setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH + 1)
+      .setStrokeStyle(2, 0xd04040);
+    const title = this.add.text(px + W / 2, py + 24, "战败", {
+      fontFamily: FONT, fontSize: "26px", color: "#d04040",
+    }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(DEPTH + 2);
+    const sub = this.add.text(px + W / 2, py + 62, `第 ${this.currentFloor ?? "?"} 层挑战失败`, {
+      fontFamily: FONT, fontSize: "14px", color: "#a09090",
+    }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(DEPTH + 2);
+
+    const mkBtn = (label, x, y, color, bg, cb) => {
+      const b = this.add.text(x, y, label, {
+        fontFamily: FONT, fontSize: "16px", color,
+        backgroundColor: bg, padding: { x: 22, y: 10 },
+      }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(DEPTH + 3)
+        .setInteractive({ useHandCursor: true });
+      b.on("pointerover", () => b.setAlpha(0.85));
+      b.on("pointerout", () => b.setAlpha(1));
+      b.on("pointerdown", cb);
+      return b;
+    };
+
+    const btnY = py + H - 56;
+    const retryBtn = mkBtn("再来一局", px + W / 2 - 90, btnY, "#0f0e12", "#c9a227", () => {
+      this._retryFloor();
     });
+    const townBtn = mkBtn("返回城镇", px + W / 2 + 90, btnY, "#e8e0d5", "#2a2040", () => {
+      this._goTownAfterDeath();
+    });
+
+    this._defeatObjs = [overlay, panel, title, sub, retryBtn, townBtn];
+  }
+
+  async _retryFloor() {
+    if (this.scene.isPaused()) this.scene.resume();
+    const floor = this.targetFloor ?? this.currentFloor;
+    try {
+      const char = await Api.rest(this.character.name);
+      this.scene.stop("UIScene");
+      this.scene.start("DungeonScene", { character: char, targetFloor: floor });
+    } catch {
+      this.scene.stop("UIScene");
+      this.scene.start("DungeonScene", {
+        character: this.character,
+        targetFloor: floor,
+      });
+    }
+  }
+
+  async _goTownAfterDeath() {
+    if (this.scene.isPaused()) this.scene.resume();
+    try {
+      const char = await Api.rest(this.character.name);
+      this.scene.stop("UIScene");
+      this.scene.start("TownScene", { character: char });
+    } catch {
+      this.scene.stop("UIScene");
+      this.scene.start("TownScene", { character: this.character });
+    }
   }
 
   // ── 辅助 ─────────────────────────────────────────────────
 
-  _nearestEnemyInRange(range = BASIC_ATTACK_RANGE) {
-    let best = null, bestDist = range;
+  _nearestEnemyInRange(range) {
+    const maxR = range ?? this.attackRange ?? BASIC_ATTACK_RANGE;
+    let best = null, bestDist = maxR;
     for (const e of this.enemies) {
       if (!e.alive) continue;
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, e.sprite.x, e.sprite.y);
@@ -618,27 +758,30 @@ export default class DungeonScene extends Phaser.Scene {
     return best;
   }
 
-  _enemyNear(x, y, threshold = TILE * 1.3) {
-    let best = null, bestDist = threshold;
-    for (const e of this.enemies) {
-      if (!e.alive) continue;
-      const d = Phaser.Math.Distance.Between(x, y, e.sprite.x, e.sprite.y);
-      if (d < bestDist) { bestDist = d; best = e; }
-    }
-    return best;
-  }
-
   _updateRangeCircle() {
-    this.rangeGfx.setPosition(this.player.x, this.player.y);
+    if (!this.player?.active) return;
+    if (!this.rangeCircle?.active) this._buildRangeCircle();
+    if (!this.rangeCircle) return;
+
+    const r = this.attackRange ?? BASIC_ATTACK_RANGE;
+    this.rangeCircle.setPosition(this.player.x, this.player.y);
+    if (this.rangeCircle.radius !== r) this.rangeCircle.setRadius(r);
+
     const inRange = this.attackTarget?.alive &&
       Phaser.Math.Distance.Between(
         this.player.x, this.player.y,
         this.attackTarget.sprite.x, this.attackTarget.sprite.y
-      ) <= BASIC_ATTACK_RANGE;
+      ) <= r;
 
-    if (inRange !== this._rangeActive) {
-      this._rangeActive = !!inRange;
-      this._redrawRangeCircle(this._rangeActive);
+    if (!!inRange !== this._rangeStyleActive) {
+      this._rangeStyleActive = !!inRange;
+      if (inRange) {
+        this.rangeCircle.setFillStyle(0xffd54a, 0.07);
+        this.rangeCircle.setStrokeStyle(1.5, 0xffd54a, 0.75);
+      } else {
+        this.rangeCircle.setFillStyle(0xffffff, 0.03);
+        this.rangeCircle.setStrokeStyle(1, 0xffffff, 0.22);
+      }
     }
   }
 

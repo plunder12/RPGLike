@@ -102,13 +102,13 @@ SKILL_REGISTRY: dict[str, SkillTemplate] = {
     "fireball": SkillTemplate(
         id="fireball",
         name="火球术",
-        desc="发射火球造成法术伤害。",
+        desc="发射火球，命中后爆炸，范围内敌人受到相同伤害。",
         class_id="wizard",
         skill_type="active",
         cooldown=1,
         resource_cost=14,
         damage_multiplier=1.7,
-        tags=("spell",),
+        tags=("spell", "explosion"),
         rank_bonus={"damage_multiplier": 0.22},
     ),
     "frost_nova": SkillTemplate(

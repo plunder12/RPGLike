@@ -11,6 +11,7 @@ const DEPTH = 2100;
 // 按 range_type 区分技能颜色。
 const SKILL_COLORS = {
   aoe:    0xff7a3a,   // 橙——范围技能
+  explosion: 0xff5522, // 火——爆炸投射
   ranged: 0x4a90e2,  // 蓝——远程/法术
   heal:   0x5cb85c,  // 绿——治疗
   buff:   0xc98ad0,  // 紫——增益

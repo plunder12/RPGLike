@@ -1,145 +1,187 @@
 {
   "name": "master",
   "class_id": "barbarian",
-  "level": 5,
-  "exp": 222,
-  "hp": 297,
-  "resource": 49,
+  "level": 6,
+  "exp": 413,
+  "hp": 606,
+  "resource": 112,
   "floor": 9,
   "highest_floor": 8,
-  "gold": 157,
-  "skill_points": 0,
+  "gold": 702,
+  "skill_points": 1,
   "skill_ranks": {
     "basic_attack": 1,
     "whirlwind": 2,
     "ground_slam": 2
   },
   "forge_levels": {
-    "weapon": 2,
-    "helm": 0,
+    "weapon": 4,
+    "helm": 1,
     "chest": 0,
     "gloves": 0,
     "boots": 0,
     "ring": 0
   },
   "forge_materials": {
-    "普通": 10,
+    "普通": 34,
     "稀有": 0,
     "史诗": 0,
     "传说": 0
   },
-  "bonus_hp": 16,
-  "bonus_attack": 4,
-  "bonus_defense": 2,
-  "bonus_resource": 8,
+  "bonus_hp": 24,
+  "bonus_attack": 6,
+  "bonus_defense": 3,
+  "bonus_resource": 12,
   "equipment": {
     "weapon": {
       "slot": "weapon",
-      "name": "战斧",
-      "rarity": "魔法",
-      "floor": 2,
+      "name": "拳套",
+      "rarity": "普通",
+      "floor": 4,
       "affixes": [
         {
-          "stat_key": "defense",
-          "display_name": "防御",
-          "value": 1
+          "stat_key": "crit_damage",
+          "display_name": "暴击伤害",
+          "value": 0.254
         }
       ]
     },
     "helm": {
       "slot": "helm",
-      "name": "不朽头盔",
+      "name": "钢头盔",
       "rarity": "普通",
-      "floor": 3,
-      "affixes": []
+      "floor": 5,
+      "affixes": [
+        {
+          "stat_key": "defense",
+          "display_name": "防御",
+          "value": 18
+        }
+      ]
     },
     "chest": {
       "slot": "chest",
       "name": "钢胸甲",
-      "rarity": "魔法",
-      "floor": 4,
+      "rarity": "普通",
+      "floor": 5,
       "affixes": [
         {
-          "stat_key": "crit_rate",
-          "display_name": "暴击率",
-          "value": 0.0
+          "stat_key": "hp_regen",
+          "display_name": "每回合回血",
+          "value": 15
         },
         {
-          "stat_key": "skill_damage",
-          "display_name": "技能伤害",
-          "value": 0.001
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 133
         }
       ]
     },
     "gloves": {
       "slot": "gloves",
-      "name": "不朽手套",
+      "name": "铁手套",
       "rarity": "普通",
-      "floor": 1,
+      "floor": 5,
       "affixes": [
         {
           "stat_key": "skill_damage",
           "display_name": "技能伤害",
-          "value": 0.071
+          "value": 0.11
+        },
+        {
+          "stat_key": "crit_rate",
+          "display_name": "暴击率",
+          "value": 0.073
         }
       ]
     },
     "boots": {
       "slot": "boots",
-      "name": "秘银靴子",
+      "name": "钢靴子",
       "rarity": "普通",
-      "floor": 1,
+      "floor": 4,
       "affixes": [
         {
           "stat_key": "max_hp",
           "display_name": "生命",
-          "value": 5
+          "value": 79
+        },
+        {
+          "stat_key": "move_speed",
+          "display_name": "移速",
+          "value": 19
         }
       ]
     },
     "ring": {
       "slot": "ring",
-      "name": "奥术戒指",
+      "name": "铁戒指",
       "rarity": "普通",
       "floor": 5,
       "affixes": [
         {
-          "stat_key": "attack",
-          "display_name": "攻击",
-          "value": 4
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.233
+        },
+        {
+          "stat_key": "crit_rate",
+          "display_name": "暴击率",
+          "value": 0.095
         }
       ]
     }
   },
   "inventory": [
     {
-      "slot": "ring",
-      "name": "远古戒指",
-      "rarity": "魔法",
-      "floor": 3,
-      "affixes": [
-        {
-          "stat_key": "skill_damage",
-          "display_name": "技能伤害",
-          "value": 0.0
-        },
-        {
-          "stat_key": "crit_damage",
-          "display_name": "暴击伤害",
-          "value": 0.001
-        }
-      ]
-    },
-    {
       "slot": "helm",
-      "name": "秘银头盔",
+      "name": "铁头盔",
       "rarity": "普通",
-      "floor": 5,
+      "floor": 6,
       "affixes": [
         {
           "stat_key": "defense",
           "display_name": "防御",
-          "value": 2
+          "value": 20
+        }
+      ]
+    },
+    {
+      "slot": "chest",
+      "name": "铁胸甲",
+      "rarity": "普通",
+      "floor": 6,
+      "affixes": [
+        {
+          "stat_key": "defense",
+          "display_name": "防御",
+          "value": 11
+        }
+      ]
+    },
+    {
+      "slot": "chest",
+      "name": "钢胸甲",
+      "rarity": "普通",
+      "floor": 6,
+      "affixes": [
+        {
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 175
+        }
+      ]
+    },
+    {
+      "slot": "gloves",
+      "name": "远古手套",
+      "rarity": "普通",
+      "floor": 6,
+      "affixes": [
+        {
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.141
         }
       ]
     },
@@ -147,64 +189,12 @@
       "slot": "gloves",
       "name": "秘银手套",
       "rarity": "普通",
-      "floor": 5,
-      "affixes": [
-        {
-          "stat_key": "skill_damage",
-          "display_name": "技能伤害",
-          "value": 0.078
-        }
-      ]
-    },
-    {
-      "slot": "boots",
-      "name": "奥术靴子",
-      "rarity": "普通",
       "floor": 6,
       "affixes": [
         {
-          "stat_key": "max_hp",
-          "display_name": "生命",
-          "value": 4
-        }
-      ]
-    },
-    {
-      "slot": "ring",
-      "name": "钢戒指",
-      "rarity": "普通",
-      "floor": 7,
-      "affixes": [
-        {
-          "stat_key": "max_hp",
-          "display_name": "生命",
-          "value": 6
-        }
-      ]
-    },
-    {
-      "slot": "weapon",
-      "name": "长剑",
-      "rarity": "普通",
-      "floor": 1,
-      "affixes": [
-        {
           "stat_key": "skill_damage",
           "display_name": "技能伤害",
-          "value": 0.153
-        }
-      ]
-    },
-    {
-      "slot": "ring",
-      "name": "钢戒指",
-      "rarity": "普通",
-      "floor": 1,
-      "affixes": [
-        {
-          "stat_key": "defense",
-          "display_name": "防御",
-          "value": 18
+          "value": 0.25
         }
       ]
     }

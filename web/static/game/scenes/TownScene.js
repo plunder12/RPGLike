@@ -222,6 +222,10 @@ export default class TownScene extends Phaser.Scene {
 
   _enterDungeon() {
     this._clearContent();
+    // 清理可能残留的 UI 层，避免二次进本卡死
+    const dungeon = this.scene.get("DungeonScene");
+    if (dungeon?.scene?.isPaused()) dungeon.scene.resume();
+    if (this.scene.isActive("UIScene")) this.scene.stop("UIScene");
     this.scene.start("DungeonScene", {
       character: this.character,
       targetFloor: this._targetFloor,

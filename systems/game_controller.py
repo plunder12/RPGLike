@@ -198,6 +198,8 @@ class GameController:
             # 范围类型：决定前端施放方式与特效
             if "aoe" in tmpl.tags:
                 range_type = "aoe"
+            elif "explosion" in tmpl.tags:
+                range_type = "explosion"
             elif eff.get("heal_ratio", 0) > 0:
                 range_type = "heal"
             elif eff.get("buff_damage", 0) > 0:

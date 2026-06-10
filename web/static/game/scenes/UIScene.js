@@ -16,6 +16,9 @@ export default class UIScene extends Phaser.Scene {
     this.skills = data && data.skills ? data.skills : [];
     this._paused = false;
     this._pauseObjs = [];
+    this.hud = null;
+    this.skillBar = null;
+    this._escHandler = null;
   }
 
   create() {
@@ -41,8 +44,19 @@ export default class UIScene extends Phaser.Scene {
     btn.on("pointerdown", () => this._togglePause());
     this._pauseBtn = btn;
 
-    // ESC 键也触发暂停菜单
-    this.input.keyboard.on("keydown-ESC", () => this._togglePause());
+    // ESC 键也触发暂停菜单（保存引用以便 shutdown 时移除）
+    this._escHandler = () => this._togglePause();
+    this.input.keyboard.on("keydown-ESC", this._escHandler);
+  }
+
+  shutdown() {
+    this._hidePauseMenu();
+    if (this._escHandler && this.input?.keyboard) {
+      this.input.keyboard.off("keydown-ESC", this._escHandler);
+      this._escHandler = null;
+    }
+    const dungeon = this.scene.get("DungeonScene");
+    if (dungeon?.scene?.isPaused()) dungeon.scene.resume();
   }
 
   _togglePause() {
@@ -88,6 +102,7 @@ export default class UIScene extends Phaser.Scene {
       this._hidePauseMenu();
       const d = this.scene.get("DungeonScene");
       if (d) {
+        if (d.scene.isPaused()) d.scene.resume();
         this.scene.stop("UIScene");
         d.scene.start("TownScene", { character: d.character });
       }

@@ -10,5 +10,7 @@ if str(ROOT) not in sys.path:
 import uvicorn
 
 if __name__ == "__main__":
-    print("文字暗黑 Web 版: http://127.0.0.1:8765")
-    uvicorn.run("web.server:app", host="127.0.0.1", port=8765, reload=False)
+    port = 8765
+    print(f"文字暗黑 Web 版: http://127.0.0.1:{port}")
+    print(f"局域网访问: http://<本机IP>:{port}  （文字版 /  2D: /game）")
+    uvicorn.run("web.server:app", host="0.0.0.0", port=port, reload=False)

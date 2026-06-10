@@ -1,14 +1,14 @@
 {
   "name": "11",
   "class_id": "wizard",
-  "level": 14,
-  "exp": 1052,
-  "hp": 3169,
-  "resource": 198,
-  "floor": 26,
-  "highest_floor": 25,
-  "gold": 405,
-  "skill_points": 1,
+  "level": 16,
+  "exp": 4749,
+  "hp": 3195,
+  "resource": 210,
+  "floor": 27,
+  "highest_floor": 26,
+  "gold": 7278,
+  "skill_points": 3,
   "skill_ranks": {
     "basic_attack": 1,
     "fireball": 3,
@@ -25,15 +25,15 @@
     "ring": 0
   },
   "forge_materials": {
-    "普通": 27,
-    "稀有": 63,
-    "史诗": 39,
+    "普通": 35,
+    "稀有": 117,
+    "史诗": 121,
     "传说": 0
   },
-  "bonus_hp": 65,
-  "bonus_attack": 26,
+  "bonus_hp": 75,
+  "bonus_attack": 30,
   "bonus_defense": 0,
-  "bonus_resource": 78,
+  "bonus_resource": 90,
   "equipment": {
     "weapon": {
       "slot": "weapon",

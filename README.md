@@ -67,13 +67,14 @@ python main_web.py
 
 | 地址 | 说明 |
 |------|------|
-| http://127.0.0.1:8765 | Web 文字版（回合战斗 + timeline） |
-| http://127.0.0.1:8765/game | **2D ARPG**（Phaser 实时战斗） |
+| http://127.0.0.1:8765 | 本机访问（文字版） |
+| http://127.0.0.1:8765/game | 本机访问（2D ARPG） |
+| http://\<本机局域网IP\>:8765 | 局域网其他设备访问（同上路径） |
 
-开发时可用热重载：
+开发时可用热重载（同样监听所有网卡，便于局域网调试）：
 
 ```bash
-python -m uvicorn web.server:app --host 127.0.0.1 --port 8765 --reload
+python -m uvicorn web.server:app --host 0.0.0.0 --port 8765 --reload
 ```
 
 > CLI 与 Web 读写同一 `saves/` 目录，在文字版练的角色可直接在 2D 版中使用。

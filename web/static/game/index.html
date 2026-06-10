@@ -30,8 +30,9 @@
 </head>
 <body>
   <div id="game-root"></div>
-  <!-- Phaser 3 通过 CDN 全局引入（Phase 0 零构建） -->
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
-  <script type="module" src="/static/game/main.js"></script>
+  <!-- Phaser 3：优先本地（局域网无需外网），失败再回退 CDN -->
+  <script src="/static/game/lib/phaser.min.js"
+    onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js'"></script>
+  <script type="module" src="/static/game/main.js?v=2"></script>
 </body>
 </html>

@@ -1,12 +1,14 @@
 // Enemy：怪物实体（占位图形）。
-// 封装精灵 + 头顶血条 + 简单 AI（待机 → 发现玩家追击 → 近身攻击）。
-// 攻击玩家通过 scene.onEnemyAttack(enemy) 回调，由 DungeonScene 结算伤害。
+// 封装精灵 + 头顶血条 + A* 寻路追击 + 近身攻击。
 
 import { TILE } from "../constants.js";
+import { findPathWorld } from "../systems/pathfinding.js";
 
-const AGGRO_RANGE = 280;   // 发现玩家的距离
-const ATTACK_RANGE = 40;   // 近身攻击距离
+const AGGRO_RANGE = 280;
+const ATTACK_RANGE = 40;
 const DEFAULT_SPEED = 95;
+const PATH_RECALC_MS = 450;
+const WAYPOINT_REACH = 10;
 
 export default class Enemy {
   constructor(scene, x, y, data) {
@@ -29,8 +31,13 @@ export default class Enemy {
     this.sprite.setCollideWorldBounds(true);
     this.sprite.owner = this;
 
-    this.speedDebuff = 0;      // 减速比例（0~1），来自冰霜新星等控制技能
+    this.speedDebuff = 0;
     this.debuffExpireAt = 0;
+
+    // 寻路状态
+    this.path = [];
+    this.pathIndex = 0;
+    this.nextPathAt = 0;
 
     this._buildHpBar();
     this._buildLabel();
@@ -65,13 +72,9 @@ export default class Enemy {
   update(time, player) {
     if (!this.alive) return;
     const dist = Phaser.Math.Distance.Between(
-      this.sprite.x,
-      this.sprite.y,
-      player.x,
-      player.y
+      this.sprite.x, this.sprite.y, player.x, player.y
     );
 
-    // 减速 debuff 到期则清除，同时恢复颜色。
     if (this.speedDebuff > 0 && time >= this.debuffExpireAt) {
       this.speedDebuff = 0;
       this.sprite.clearTint();
@@ -81,17 +84,57 @@ export default class Enemy {
 
     if (dist <= ATTACK_RANGE) {
       this.sprite.body.setVelocity(0, 0);
+      this.path = [];
+      this.pathIndex = 0;
       if (time >= this.nextAttackAt) {
         this.nextAttackAt = time + this.attackCooldown;
         this.scene.onEnemyAttack(this);
       }
     } else if (dist <= AGGRO_RANGE) {
-      this.scene.physics.moveToObject(this.sprite, player, effectiveSpeed);
+      this._chaseWithPath(time, player, effectiveSpeed);
     } else {
       this.sprite.body.setVelocity(0, 0);
+      this.path = [];
+      this.pathIndex = 0;
     }
 
     this._syncOverlay();
+  }
+
+  _chaseWithPath(time, player, speed) {
+    if (time >= this.nextPathAt || this.pathIndex >= this.path.length) {
+      this.path = findPathWorld(
+        this.sprite.x, this.sprite.y, player.x, player.y
+      );
+      this.pathIndex = 0;
+      this.nextPathAt = time + PATH_RECALC_MS;
+    }
+
+    if (this.path.length === 0) {
+      // 无路可走时尝试直线（贴墙滑动由物理碰撞处理）
+      this.scene.physics.moveToObject(this.sprite, player, speed);
+      return;
+    }
+
+    const wp = this.path[this.pathIndex];
+    const dx = wp.x - this.sprite.x;
+    const dy = wp.y - this.sprite.y;
+    const d = Math.sqrt(dx * dx + dy * dy);
+
+    if (d < WAYPOINT_REACH) {
+      this.pathIndex++;
+      if (this.pathIndex >= this.path.length) {
+        this.sprite.body.setVelocity(0, 0);
+        return;
+      }
+      const next = this.path[this.pathIndex];
+      const ndx = next.x - this.sprite.x;
+      const ndy = next.y - this.sprite.y;
+      const nd = Math.sqrt(ndx * ndx + ndy * ndy) || 1;
+      this.sprite.body.setVelocity((ndx / nd) * speed, (ndy / nd) * speed);
+    } else {
+      this.sprite.body.setVelocity((dx / d) * speed, (dy / d) * speed);
+    }
   }
 
   _syncOverlay() {
@@ -112,10 +155,9 @@ export default class Enemy {
   takeDamage(amount) {
     if (!this.alive) return;
     this.hp = Math.max(0, this.hp - amount);
-    // 受击闪白。
     this.sprite.setTintFill(0xffffff);
     this.scene.time.delayedCall(70, () => {
-      if (this.sprite && this.sprite.active) this.sprite.clearTint();
+      if (this.sprite?.active) this.sprite.clearTint();
     });
     if (this.hp <= 0) this.die();
   }

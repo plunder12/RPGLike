@@ -8,6 +8,16 @@ import DungeonScene from "./scenes/DungeonScene.js";
 import UIScene from "./scenes/UIScene.js";
 import { COLORS } from "./constants.js";
 
+if (typeof Phaser === "undefined") {
+  const root = document.getElementById("game-root");
+  if (root) {
+    root.innerHTML =
+      "<p style='color:#d04040;padding:24px;font-family:Microsoft YaHei,sans-serif'>" +
+      "Phaser 引擎加载失败，请刷新页面或检查网络连接。</p>";
+  }
+  throw new Error("Phaser not loaded");
+}
+
 const config = {
   type: Phaser.AUTO,
   parent: "game-root",
