@@ -51,6 +51,11 @@ export default class Hud {
       this.riftLabel.setText("首领战");
       this.riftText.setText("BOSS");
       this.riftFill.setFillStyle(0xd9534f);
+    } else if (phase === "boss_pending") {
+      this.riftLabel.setText("首领降临");
+      this.riftText.setText("前往最深处 →");
+      this.riftFill.width = this.riftBarW;
+      this.riftFill.setFillStyle(0xd9534f);
     } else {
       this.riftLabel.setText("秘境进度");
       this.riftText.setText(`${pct}%  (${current}/${quota})`);

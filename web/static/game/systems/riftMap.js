@@ -127,3 +127,13 @@ export function buildRiftMap(chunkCount) {
 export function tileCenter(col, row) {
   return { x: col * TILE + TILE / 2, y: row * TILE + TILE / 2 };
 }
+
+/** 首领房间（最后一块）列范围 */
+export function getBossArenaBounds(chunkCount) {
+  const colStart = (chunkCount - 1) * CHUNK_COLS;
+  return {
+    chunkIndex: chunkCount - 1,
+    colStart,
+    colEnd: colStart + CHUNK_COLS - 1,
+  };
+}

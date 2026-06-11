@@ -18,7 +18,7 @@ import {
 import { Api } from "../systems/apiClient.js";
 import { playerHitDamage, skillHitDamage, monsterHitDamage } from "../systems/combat.js";
 import { isDungeonUiZone, isTouchDevice } from "../systems/inputZones.js";
-import { buildRiftMap, tileCenter, CHUNK_COLS } from "../systems/riftMap.js";
+import { buildRiftMap, tileCenter, CHUNK_COLS, GAP_ROWS, getBossArenaBounds } from "../systems/riftMap.js";
 import { setWalkGrid } from "../systems/pathfinding.js";
 import Enemy from "../entities/Enemy.js";
 
@@ -126,17 +126,44 @@ export default class DungeonScene extends Phaser.Scene {
     this.mapReady = true;
   }
 
-  _sealGapWalls() {
+  _addWallCell(col, row) {
+    if (!this.riftMap || this.riftMap.grid[row][col] === 1) return;
+    this.riftMap.grid[row][col] = 1;
+    const x = col * TILE + TILE / 2;
+    const y = row * TILE + TILE / 2;
+    const wall = this.add.image(x, y, "tile_wall").setDepth(5);
+    this.physics.add.existing(wall, true);
+    this.walls.add(wall);
+  }
+
+  /** 封闭首领房间：墙化房间外所有地面，并封住房间左右缺口 */
+  _sealBossArena() {
     if (!this.riftMap) return;
-    for (const { col, row } of this.riftMap.gapCells) {
-      this.riftMap.grid[row][col] = 1;
-      const x = col * TILE + TILE / 2;
-      const y = row * TILE + TILE / 2;
-      const wall = this.add.image(x, y, "tile_wall").setDepth(5);
-      this.physics.add.existing(wall, true);
-      this.walls.add(wall);
+    const { colStart, colEnd } = getBossArenaBounds(this.riftMap.chunkCount);
+    const { grid, rows, cols } = this.riftMap;
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const inBossRoom = c >= colStart && c <= colEnd;
+        if (!inBossRoom && grid[r][c] === 0) {
+          this._addWallCell(c, r);
+        }
+      }
     }
-    setWalkGrid(this.riftMap.grid, this.riftMap.cols, this.riftMap.rows);
+    for (const r of GAP_ROWS) {
+      if (grid[r][colStart] === 0) this._addWallCell(colStart, r);
+      if (grid[r][colEnd] === 0) this._addWallCell(colEnd, r);
+    }
+    setWalkGrid(grid, cols, rows);
+  }
+
+  _playerChunkIndex() {
+    const col = Math.floor(this.player.x / TILE);
+    return Phaser.Math.Clamp(
+      Math.floor(col / CHUNK_COLS),
+      0,
+      this.riftMap.chunkCount - 1
+    );
   }
 
   _createPlayer() {
@@ -413,7 +440,8 @@ export default class DungeonScene extends Phaser.Scene {
         `秘境 · 第 ${data.floor} 层 · ${rift.num_chunks} 地块 · 进度 ${rift.kill_quota}`,
         2200
       );
-      this._enterChunk(0);
+      this._preSpawnChunk(0);
+      if (rift.num_chunks > 1) this._preSpawnChunk(1);
       this._syncRiftHud();
 
       if (data.active_skills?.length > 0) {
@@ -429,27 +457,54 @@ export default class DungeonScene extends Phaser.Scene {
     }
   }
 
-  _enterChunk(chunkIndex) {
+  /** 刷怪点：避开块西侧入口通道，首块再避开玩家出生点 */
+  _getChunkSpawnSpots(chunkIndex) {
+    const all = this.riftMap.spawnPoints[chunkIndex] || [];
+    const ox = this.riftMap.chunkOffsets[chunkIndex];
+
+    if (chunkIndex === 0) {
+      const sx = 2;
+      const sy = 6;
+      const safeR = 5;
+      return all.filter(
+        (p) => Math.abs(p.col - sx) + Math.abs(p.row - sy) >= safeR
+      );
+    }
+
+    // 非首块：只在块内偏东 2/3 区域刷怪，避免堵在玩家进块口
+    const minCol = ox + 6;
+    return all.filter((p) => p.col >= minCol);
+  }
+
+  _preSpawnChunk(chunkIndex) {
     if (this.chunkSpawned[chunkIndex]) return;
+    const lastChunk = this.riftMap.chunkCount - 1;
+    if (this.riftPhase === "boss_pending" && chunkIndex === lastChunk) return;
+
     this.chunkSpawned[chunkIndex] = true;
     const monsters = this.chunkSpawns[chunkIndex] || [];
-    const spots = [...(this.riftMap.spawnPoints[chunkIndex] || [])];
+    let spots = this._getChunkSpawnSpots(chunkIndex);
+    if (!spots.length) {
+      spots = [...(this.riftMap.spawnPoints[chunkIndex] || [])];
+    }
     this._spawnMonstersInArea(monsters, spots);
   }
 
   _updateChunkExploration() {
-    if (!this.player || this.riftPhase !== "explore") return;
-    const col = Math.floor(this.player.x / TILE);
-    const chunk = Phaser.Math.Clamp(
-      Math.floor(col / CHUNK_COLS),
-      0,
-      this.riftMap.chunkCount - 1
-    );
+    if (!this.player || this.riftPhase === "boss") return;
+    const chunk = this._playerChunkIndex();
+    const lastChunk = this.riftMap.chunkCount - 1;
+
     if (chunk > this.currentChunk) {
-      for (let i = this.currentChunk + 1; i <= chunk; i++) {
-        this._enterChunk(i);
-      }
       this.currentChunk = chunk;
+      const ahead = chunk + 1;
+      if (ahead <= lastChunk && !(this.riftPhase === "boss_pending" && ahead === lastChunk)) {
+        this._preSpawnChunk(ahead);
+      }
+    }
+
+    if (this.riftPhase === "boss_pending" && chunk >= lastChunk) {
+      this._beginBossFight();
     }
   }
 
@@ -471,20 +526,33 @@ export default class DungeonScene extends Phaser.Scene {
     }
   }
 
-  _triggerBossPhase() {
-    if (this.riftPhase === "boss") return;
-    this.riftPhase = "boss";
-    this._banner("进度已满！通道封闭，首领降临！", 2400);
-    this._sealGapWalls();
+  _onKillQuotaComplete() {
+    if (this.riftPhase !== "explore") return;
 
     for (const e of [...this.enemies]) {
       if (e.alive && !e.isBoss) e.forceDespawn();
     }
     this.enemies = this.enemies.filter(e => e.alive);
 
-    const last = this.riftMap.chunkCount - 1;
-    const ox = last * CHUNK_COLS;
-    const pos = tileCenter(ox + Math.floor(CHUNK_COLS / 2), 6);
+    const lastChunk = this.riftMap.chunkCount - 1;
+    if (this._playerChunkIndex() >= lastChunk) {
+      this._beginBossFight();
+      return;
+    }
+
+    this.riftPhase = "boss_pending";
+    this._banner("进度已满！前往最深处，首领等待一战！", 2800);
+    this._syncRiftHud();
+  }
+
+  _beginBossFight() {
+    if (this.riftPhase === "boss") return;
+    this.riftPhase = "boss";
+    this._banner("通道封闭！首领降临！", 2400);
+    this._sealBossArena();
+
+    const { colStart } = getBossArenaBounds(this.riftMap.chunkCount);
+    const pos = tileCenter(colStart + Math.floor(CHUNK_COLS / 2), 6);
     const boss = new Enemy(this, pos.x, pos.y, this.bossData);
     this.enemyGroup.add(boss.sprite);
     this.enemies.push(boss);
@@ -836,7 +904,7 @@ export default class DungeonScene extends Phaser.Scene {
     this._syncRiftHud();
 
     if (this.killProgress >= this.killQuota) {
-      this._triggerBossPhase();
+      this._onKillQuotaComplete();
     }
   }
 

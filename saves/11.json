@@ -2,12 +2,12 @@
   "name": "11",
   "class_id": "wizard",
   "level": 16,
-  "exp": 13840,
+  "exp": 14077,
   "hp": 3195,
   "resource": 210,
   "floor": 27,
   "highest_floor": 26,
-  "gold": 8055,
+  "gold": 8151,
   "skill_points": 3,
   "skill_ranks": {
     "basic_attack": 1,
@@ -25,7 +25,7 @@
     "ring": 0
   },
   "forge_materials": {
-    "普通": 38,
+    "普通": 61,
     "稀有": 141,
     "史诗": 143,
     "传说": 0
@@ -432,6 +432,148 @@
           "stat_key": "move_speed_pct",
           "display_name": "移速",
           "value": 0.07
+        }
+      ]
+    },
+    {
+      "slot": "weapon",
+      "name": "法杖",
+      "rarity": "普通",
+      "floor": 2,
+      "affixes": [
+        {
+          "stat_key": "crit_damage",
+          "display_name": "暴击伤害",
+          "value": 0.197
+        },
+        {
+          "stat_key": "crit_rate",
+          "display_name": "暴击率",
+          "value": 0.09
+        }
+      ]
+    },
+    {
+      "slot": "chest",
+      "name": "不朽胸甲",
+      "rarity": "普通",
+      "floor": 2,
+      "affixes": [
+        {
+          "stat_key": "hp_regen",
+          "display_name": "每回合回血",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "slot": "ring",
+      "name": "奥术戒指",
+      "rarity": "普通",
+      "floor": 2,
+      "affixes": [
+        {
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 71
+        },
+        {
+          "stat_key": "crit_damage",
+          "display_name": "暴击伤害",
+          "value": 0.21
+        }
+      ]
+    },
+    {
+      "slot": "gloves",
+      "name": "秘银手套",
+      "rarity": "普通",
+      "floor": 2,
+      "affixes": [
+        {
+          "stat_key": "attack",
+          "display_name": "攻击",
+          "value": 30
+        },
+        {
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.131
+        }
+      ]
+    },
+    {
+      "slot": "chest",
+      "name": "奥术胸甲",
+      "rarity": "普通",
+      "floor": 2,
+      "affixes": [
+        {
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 144
+        }
+      ]
+    },
+    {
+      "slot": "weapon",
+      "name": "匕首",
+      "rarity": "普通",
+      "floor": 2,
+      "affixes": [
+        {
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.184
+        },
+        {
+          "stat_key": "crit_damage",
+          "display_name": "暴击伤害",
+          "value": 0.118
+        }
+      ]
+    },
+    {
+      "slot": "chest",
+      "name": "远古胸甲",
+      "rarity": "普通",
+      "floor": 2,
+      "affixes": [
+        {
+          "stat_key": "hp_regen",
+          "display_name": "每回合回血",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "slot": "ring",
+      "name": "远古戒指",
+      "rarity": "普通",
+      "floor": 2,
+      "affixes": [
+        {
+          "stat_key": "crit_damage",
+          "display_name": "暴击伤害",
+          "value": 0.156
+        }
+      ]
+    },
+    {
+      "slot": "chest",
+      "name": "远古胸甲",
+      "rarity": "普通",
+      "floor": 2,
+      "affixes": [
+        {
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 81
+        },
+        {
+          "stat_key": "defense",
+          "display_name": "防御",
+          "value": 22
         }
       ]
     }

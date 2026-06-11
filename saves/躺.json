@@ -1,0 +1,185 @@
+{
+  "name": "躺",
+  "class_id": "barbarian",
+  "level": 3,
+  "exp": 131,
+  "hp": 264,
+  "resource": 108,
+  "floor": 2,
+  "highest_floor": 1,
+  "gold": 143,
+  "skill_points": 2,
+  "skill_ranks": {
+    "basic_attack": 1
+  },
+  "forge_levels": {
+    "weapon": 0,
+    "helm": 0,
+    "chest": 0,
+    "gloves": 0,
+    "boots": 0,
+    "ring": 0
+  },
+  "forge_materials": {
+    "普通": 19,
+    "稀有": 0,
+    "史诗": 0,
+    "传说": 0
+  },
+  "bonus_hp": 16,
+  "bonus_attack": 4,
+  "bonus_defense": 2,
+  "bonus_resource": 8,
+  "equipment": {
+    "weapon": null,
+    "helm": null,
+    "chest": null,
+    "gloves": null,
+    "boots": null,
+    "ring": null
+  },
+  "inventory": [
+    {
+      "slot": "boots",
+      "name": "远古靴子",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "move_speed_pct",
+          "display_name": "移速",
+          "value": 0.068
+        }
+      ]
+    },
+    {
+      "slot": "chest",
+      "name": "秘银胸甲",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "hp_regen",
+          "display_name": "每回合回血",
+          "value": 11
+        },
+        {
+          "stat_key": "defense",
+          "display_name": "防御",
+          "value": 13
+        }
+      ]
+    },
+    {
+      "slot": "boots",
+      "name": "铁靴子",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "move_speed",
+          "display_name": "移速",
+          "value": 14
+        }
+      ]
+    },
+    {
+      "slot": "gloves",
+      "name": "奥术手套",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.165
+        }
+      ]
+    },
+    {
+      "slot": "boots",
+      "name": "钢靴子",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "move_speed_pct",
+          "display_name": "移速",
+          "value": 0.084
+        },
+        {
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 117
+        }
+      ]
+    },
+    {
+      "slot": "helm",
+      "name": "远古头盔",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "hp_regen",
+          "display_name": "每回合回血",
+          "value": 4
+        },
+        {
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 73
+        }
+      ]
+    },
+    {
+      "slot": "ring",
+      "name": "不朽戒指",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 49
+        },
+        {
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.113
+        }
+      ]
+    },
+    {
+      "slot": "helm",
+      "name": "远古头盔",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 56
+        }
+      ]
+    },
+    {
+      "slot": "chest",
+      "name": "铁胸甲",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "defense",
+          "display_name": "防御",
+          "value": 12
+        },
+        {
+          "stat_key": "hp_regen",
+          "display_name": "每回合回血",
+          "value": 11
+        }
+      ]
+    }
+  ]
+}
