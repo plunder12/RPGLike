@@ -9,21 +9,23 @@ import {
   TILE,
   PLAYER_SPEED,
   COLORS,
-  TEST_MAP,
-  MAP_COLS,
-  MAP_ROWS,
-  MAP_WIDTH,
-  MAP_HEIGHT,
   BASIC_ATTACK_RANGE,
   getAttackRange,
   SKILL_RANGES,
+  CHAR_SCALE,
+  PLAYER_CLASSES,
 } from "../constants.js";
 import { Api } from "../systems/apiClient.js";
 import { playerHitDamage, skillHitDamage, monsterHitDamage } from "../systems/combat.js";
+import { isDungeonUiZone, isTouchDevice } from "../systems/inputZones.js";
+import { buildRiftMap, tileCenter, CHUNK_COLS } from "../systems/riftMap.js";
+import { setWalkGrid } from "../systems/pathfinding.js";
 import Enemy from "../entities/Enemy.js";
 
 const PLAYER_ATTACK_CD = 450;
-const BASIC_RESOURCE_GAIN = 10; // 普攻回复资源量
+const BASIC_RESOURCE_GAIN = 10;
+const MOVE_ARRIVAL = 14;
+const ENEMY_CLICK_RADIUS = 34;
 
 export default class DungeonScene extends Phaser.Scene {
   constructor() {
@@ -37,14 +39,29 @@ export default class DungeonScene extends Phaser.Scene {
     this.playerSpeed = ms || PLAYER_SPEED;
     const classId = this.character?.class_id ?? "barbarian";
     this.attackRange = getAttackRange(classId);
+    this.playerClassId = PLAYER_CLASSES.includes(classId) ? classId : "barbarian";
 
     this.attackTarget = null;
+    this.lockedTarget = null;
+    this.moveTarget = null;
+    this.moveMarker = null;
     this.nextPlayerAttackAt = 0;
     this.enemies = [];
     this.cleared = false;
     this.dead = false;
-    this.killLog = [];       // 记录每次击杀 {is_boss, is_elite}
-    this.floorMode = "push"; // 进入层后由 _startFloor 更新
+    this.killLog = [];
+    this.floorMode = "push";
+
+    // 秘境状态
+    this.riftPhase = "explore";
+    this.killQuota = 0;
+    this.killProgress = 0;
+    this.riftMap = null;
+    this.chunkSpawns = [];
+    this.chunkSpawned = [];
+    this.currentChunk = 0;
+    this.bossData = null;
+    this.mapReady = false;
 
     const s = this.character ? this.character.stats : {};
     this.playerHp = s.hp != null ? s.hp : (s.max_hp || 100);
@@ -59,6 +76,8 @@ export default class DungeonScene extends Phaser.Scene {
     // 战吼 buff
     this.buffDamage = 0;
     this.buffExpireAt = 0;
+
+    this.playerAttacking = false;
   }
 
   create() {
@@ -67,58 +86,108 @@ export default class DungeonScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor(COLORS.bg);
 
-    this._buildMap();
-    this._createPlayer();
-    this._setupCamera();
-    this._setupInput();
+    this.walls = this.physics.add.staticGroup();
+    this.floorTiles = [];
+    this.enemyGroup = this.physics.add.group();
+    this.physics.add.collider(this.enemyGroup, this.walls);
+    this.physics.add.collider(this.enemyGroup, this.enemyGroup);
 
-    // 重启 UIScene，避免残留暂停状态或重复监听
+    this._setupInput();
     if (this.scene.isActive("UIScene")) this.scene.stop("UIScene");
     this.scene.launch("UIScene", { character: this.character, skills: this.skills });
 
-    this._buildRangeCircle();
-    this._buildTargetIndicator();
     this._createHint();
     this._startRegenTimer();
     this._startFloor();
   }
 
-  // ── 地图 ──────────────────────────────────────────────────
+  // ── 秘境地图 ──────────────────────────────────────────────
 
-  _buildMap() {
-    this.walls = this.physics.add.staticGroup();
-    this.floorTiles = [];
+  _buildRiftMap(numChunks) {
+    this.riftMap = buildRiftMap(numChunks);
+    setWalkGrid(this.riftMap.grid, this.riftMap.cols, this.riftMap.rows);
+    this.floorTiles = this.riftMap.floorTiles;
 
-    for (let row = 0; row < MAP_ROWS; row++) {
-      for (let col = 0; col < MAP_COLS; col++) {
+    for (let row = 0; row < this.riftMap.rows; row++) {
+      for (let col = 0; col < this.riftMap.cols; col++) {
         const x = col * TILE + TILE / 2;
         const y = row * TILE + TILE / 2;
-        if (TEST_MAP[row][col] === 1) {
-          const wall = this.add.image(x, y, "tile_wall");
+        if (this.riftMap.grid[row][col] === 1) {
+          const wall = this.add.image(x, y, "tile_wall").setDepth(5);
           this.physics.add.existing(wall, true);
           this.walls.add(wall);
         } else {
           const key = (row + col) % 2 === 0 ? "tile_floor" : "tile_floor_alt";
-          this.add.image(x, y, key);
-          this.floorTiles.push({ x, y });
+          this.add.image(x, y, key).setDepth(0);
         }
       }
     }
-    this.physics.world.setBounds(0, 0, MAP_WIDTH, MAP_HEIGHT);
+    this.physics.world.setBounds(0, 0, this.riftMap.width, this.riftMap.height);
+    this.mapReady = true;
+  }
+
+  _sealGapWalls() {
+    if (!this.riftMap) return;
+    for (const { col, row } of this.riftMap.gapCells) {
+      this.riftMap.grid[row][col] = 1;
+      const x = col * TILE + TILE / 2;
+      const y = row * TILE + TILE / 2;
+      const wall = this.add.image(x, y, "tile_wall").setDepth(5);
+      this.physics.add.existing(wall, true);
+      this.walls.add(wall);
+    }
+    setWalkGrid(this.riftMap.grid, this.riftMap.cols, this.riftMap.rows);
   }
 
   _createPlayer() {
-    const spawn = this.floorTiles[0] || { x: MAP_WIDTH / 2, y: MAP_HEIGHT / 2 };
-    this.spawnPoint = spawn;
-    this.player = this.physics.add.image(spawn.x, spawn.y, "player");
+    const start = tileCenter(2, 6);
+    this.spawnPoint = start;
+    const classId = this.playerClassId;
+    const tex = this.textures.exists(classId) ? classId : null;
+
+    if (tex) {
+      this.player = this.physics.add.sprite(start.x, start.y, tex, 0);
+      this.player.setScale(CHAR_SCALE);
+      this.player.setDepth(20);
+      this._playPlayerAnim("idle", true);
+    } else {
+      this.player = this.physics.add.image(start.x, start.y, "player");
+      this.player.setDepth(20);
+    }
+
     this.player.setCollideWorldBounds(true);
     this.player.body.setSize(TILE - 8, TILE - 8, true);
     this.physics.add.collider(this.player, this.walls);
+    this.physics.add.collider(this.player, this.enemyGroup);
+  }
 
-    this.enemyGroup = this.physics.add.group();
-    this.physics.add.collider(this.enemyGroup, this.walls);
-    this.physics.add.collider(this.enemyGroup, this.enemyGroup);
-    this.physics.add.overlap(this.player, this.enemyGroup);
+  _playPlayerAnim(state, force = false) {
+    if (!this.textures.exists(this.playerClassId)) return;
+    const key = `${this.playerClassId}_${state}`;
+    if (!this.anims.exists(key)) return;
+    if (!force && this.playerAttacking && state !== "attack") return;
+    if (this.player.anims.currentAnim?.key === key && state !== "attack") return;
+    this.player.play(key, true);
+  }
+
+  _triggerPlayerAttackAnim() {
+    if (!this.textures.exists(this.playerClassId)) return;
+    const key = `${this.playerClassId}_attack`;
+    if (!this.anims.exists(key)) return;
+    this.playerAttacking = true;
+    this.player.play(key);
+    this.player.once(`animationcomplete-${key}`, () => {
+      this.playerAttacking = false;
+    });
+  }
+
+  _updatePlayerAnim(body) {
+    if (!this.textures.exists(this.playerClassId) || this.playerAttacking) return;
+    const moving = body.velocity.x !== 0 || body.velocity.y !== 0;
+    if (moving && body.velocity.x !== 0) {
+      this.player.setFlipX(body.velocity.x < 0);
+    }
+    this._playPlayerAnim(moving ? "walk" : "idle");
   }
 
   _buildRangeCircle() {
@@ -151,9 +220,9 @@ export default class DungeonScene extends Phaser.Scene {
 
   _setupCamera() {
     const cam = this.cameras.main;
-    cam.setBounds(0, 0, MAP_WIDTH, MAP_HEIGHT);
+    cam.setBounds(0, 0, this.riftMap.width, this.riftMap.height);
     cam.startFollow(this.player, true, 0.12, 0.12);
-    cam.setZoom(1.5);
+    cam.setZoom(1.35);
   }
 
   // ── 输入 ──────────────────────────────────────────────────
@@ -162,11 +231,125 @@ export default class DungeonScene extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys("W,A,S,D");
 
-    // ESC 由 UIScene 的暂停菜单统一处理
+    this._onPointerDown = (pointer) => this._handleWorldPointer(pointer);
+    this.input.on("pointerdown", this._onPointerDown);
+  }
+
+  /** UIScene 技能栏点击施法 */
+  castSkillFromUi(skill) {
+    if (this.dead || this.scene.isPaused()) return;
+    this._castSkill(skill, this.time.now);
+  }
+
+  _handleWorldPointer(pointer) {
+    if (this.dead || this.cleared) return;
+    const ui = this.scene.get("UIScene");
+    if (ui?._paused) return;
+
+    const cam = this.cameras.main;
+    const sx = pointer.x;
+    const sy = pointer.y;
+    const hasJoy = isTouchDevice(this.game);
+    if (ui?.isJoystickAt?.(sx, sy)) return;
+    if (isDungeonUiZone(sx, sy, cam.width, cam.height, hasJoy)) return;
+
+    const world = cam.getWorldPoint(sx, sy);
+
+    const enemy = this._enemyAtWorldPoint(world.x, world.y);
+    if (enemy) {
+      this.lockedTarget = enemy;
+      this.moveTarget = {
+        x: enemy.sprite.x,
+        y: enemy.sprite.y,
+        follow: enemy,
+      };
+      this._showMoveMarker(enemy.sprite.x, enemy.sprite.y);
+      return;
+    }
+
+    this.lockedTarget = null;
+    this.moveTarget = { x: world.x, y: world.y };
+    this._showMoveMarker(world.x, world.y);
+  }
+
+  _enemyAtWorldPoint(wx, wy) {
+    let best = null;
+    let bestDist = ENEMY_CLICK_RADIUS;
+    for (const e of this.enemies) {
+      if (!e.alive) continue;
+      const d = Phaser.Math.Distance.Between(wx, wy, e.sprite.x, e.sprite.y);
+      if (d < bestDist) {
+        bestDist = d;
+        best = e;
+      }
+    }
+    return best;
+  }
+
+  _showMoveMarker(x, y) {
+    if (this.moveMarker?.active) this.moveMarker.destroy();
+    this.moveMarker = this.add
+      .circle(x, y, 8, 0xc9a227, 0.35)
+      .setStrokeStyle(1.5, 0xffd54a, 0.85)
+      .setDepth(15);
+    this.tweens.add({
+      targets: this.moveMarker,
+      scale: 1.6,
+      alpha: 0,
+      duration: 600,
+      onComplete: () => {
+        if (this.moveMarker?.active) {
+          this.moveMarker.destroy();
+          this.moveMarker = null;
+        }
+      },
+    });
+  }
+
+  _readMovementInput() {
+    const kb = this._readKeyboard();
+    if (kb.x !== 0 || kb.y !== 0) {
+      this.moveTarget = null;
+      return kb;
+    }
+
+    const ui = this.scene.get("UIScene");
+    const joy = ui?.getJoystickVector?.();
+    if (joy?.active && (Math.abs(joy.x) > 0.12 || Math.abs(joy.y) > 0.12)) {
+      this.moveTarget = null;
+      return { x: joy.x, y: joy.y };
+    }
+
+    if (this.moveTarget) {
+      if (this.moveTarget.follow?.alive) {
+        this.moveTarget.x = this.moveTarget.follow.sprite.x;
+        this.moveTarget.y = this.moveTarget.follow.sprite.y;
+      }
+      const dx = this.moveTarget.x - this.player.x;
+      const dy = this.moveTarget.y - this.player.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist <= MOVE_ARRIVAL) {
+        this.moveTarget = null;
+        return { x: 0, y: 0 };
+      }
+      return { x: dx / dist, y: dy / dist };
+    }
+
+    return { x: 0, y: 0 };
+  }
+
+  _resolveAttackTarget() {
+    if (this.lockedTarget?.alive) return this.lockedTarget;
+    return this._nearestEnemyInRange();
   }
 
   shutdown() {
-    this.input.off("pointerdown");
+    if (this._onPointerDown) {
+      this.input.off("pointerdown", this._onPointerDown);
+      this._onPointerDown = null;
+    }
+    this.moveMarker?.destroy();
+    this.moveMarker = null;
     if (this.regenTimer) {
       this.regenTimer.destroy();
       this.regenTimer = null;
@@ -185,9 +368,12 @@ export default class DungeonScene extends Phaser.Scene {
 
   _createHint() {
     const cam = this.cameras.main;
+    const touch = isTouchDevice(this.game);
+    const hint = touch
+      ? "向右探索秘境 · 摇杆/点击移动 · 杀满进度出 BOSS · 战败失去奖励"
+      : "向右探索 · WASD/点击移动 · 杀满进度 BOSS 战 · 战败失去本轮奖励";
     this.add
-      .text(10, cam.height - 10,
-        "WASD 移动 · 自动攻击最近目标（金圈）· Q/E/R/F 技能 · ESC 暂停", {
+      .text(10, cam.height - 10, hint, {
           fontFamily: "Microsoft YaHei, sans-serif",
           fontSize: "12px",
           color: "#9a9088",
@@ -205,41 +391,106 @@ export default class DungeonScene extends Phaser.Scene {
     if (!this.character) return;
     try {
       const data = await Api.startFloor(this.character.name, this.targetFloor);
-      this._banner(
-        `${data.mode === "farm" ? "刷层" : "推进"} · 第 ${data.floor} 层 · 怪物 ${data.monsters.length}`,
-        1600
-      );
+      const rift = data.rift;
       this.currentFloor = data.floor;
       this.floorMode = data.mode;
-      this._spawnMonsters(data.monsters);
+      this.killQuota = rift.kill_quota;
+      this.killProgress = 0;
+      this.chunkSpawns = rift.chunk_spawns;
+      this.bossData = rift.boss;
+      this.chunkSpawned = new Array(rift.num_chunks).fill(false);
+      this.currentChunk = 0;
+      this.riftPhase = "explore";
+      this.killLog = [];
 
-      // 初始化技能（数据填入 this.skills，UIScene 持有相同引用）
-      if (data.active_skills && data.active_skills.length > 0) {
+      this._buildRiftMap(rift.num_chunks);
+      this._createPlayer();
+      this._setupCamera();
+      this._buildRangeCircle();
+      this._buildTargetIndicator();
+
+      this._banner(
+        `秘境 · 第 ${data.floor} 层 · ${rift.num_chunks} 地块 · 进度 ${rift.kill_quota}`,
+        2200
+      );
+      this._enterChunk(0);
+      this._syncRiftHud();
+
+      if (data.active_skills?.length > 0) {
         data.active_skills.forEach(s => {
           this.skills.push({ ...s, nextReadyAt: 0 });
         });
         this._bindSkillKeys();
         const ui = this.scene.get("UIScene");
-        if (ui && ui.initSkills) ui.initSkills(this.skills);
+        if (ui?.initSkills) ui.initSkills(this.skills);
       }
     } catch (e) {
       this._banner(`加载失败：${e.message}`, 3000);
     }
   }
 
-  _spawnMonsters(monsters) {
-    const far = this.floorTiles.filter(
-      t => Phaser.Math.Distance.Between(t.x, t.y, this.spawnPoint.x, this.spawnPoint.y) > TILE * 4
-    );
-    const pool = far.length >= monsters.length ? far : this.floorTiles;
+  _enterChunk(chunkIndex) {
+    if (this.chunkSpawned[chunkIndex]) return;
+    this.chunkSpawned[chunkIndex] = true;
+    const monsters = this.chunkSpawns[chunkIndex] || [];
+    const spots = [...(this.riftMap.spawnPoints[chunkIndex] || [])];
+    this._spawnMonstersInArea(monsters, spots);
+  }
 
-    monsters.forEach(m => {
-      const spot = Phaser.Utils.Array.GetRandom(pool);
+  _updateChunkExploration() {
+    if (!this.player || this.riftPhase !== "explore") return;
+    const col = Math.floor(this.player.x / TILE);
+    const chunk = Phaser.Math.Clamp(
+      Math.floor(col / CHUNK_COLS),
+      0,
+      this.riftMap.chunkCount - 1
+    );
+    if (chunk > this.currentChunk) {
+      for (let i = this.currentChunk + 1; i <= chunk; i++) {
+        this._enterChunk(i);
+      }
+      this.currentChunk = chunk;
+    }
+  }
+
+  _spawnMonstersInArea(monsters, spots) {
+    if (!monsters.length || !spots.length) return;
+    Phaser.Utils.Array.Shuffle(spots);
+    monsters.forEach((m, i) => {
+      const spot = spots[i % spots.length];
       const enemy = new Enemy(this, spot.x, spot.y, m);
       this.enemyGroup.add(enemy.sprite);
       this.enemies.push(enemy);
     });
-    this.aliveCount = this.enemies.length;
+  }
+
+  _syncRiftHud() {
+    const ui = this.scene.get("UIScene");
+    if (ui?.updateRiftProgress) {
+      ui.updateRiftProgress(this.killProgress, this.killQuota, this.riftPhase);
+    }
+  }
+
+  _triggerBossPhase() {
+    if (this.riftPhase === "boss") return;
+    this.riftPhase = "boss";
+    this._banner("进度已满！通道封闭，首领降临！", 2400);
+    this._sealGapWalls();
+
+    for (const e of [...this.enemies]) {
+      if (e.alive && !e.isBoss) e.forceDespawn();
+    }
+    this.enemies = this.enemies.filter(e => e.alive);
+
+    const last = this.riftMap.chunkCount - 1;
+    const ox = last * CHUNK_COLS;
+    const pos = tileCenter(ox + Math.floor(CHUNK_COLS / 2), 6);
+    const boss = new Enemy(this, pos.x, pos.y, this.bossData);
+    this.enemyGroup.add(boss.sprite);
+    this.enemies.push(boss);
+    this.lockedTarget = boss;
+
+    this._syncRiftHud();
   }
 
   // ── 回复计时器 ───────────────────────────────────────────
@@ -270,19 +521,20 @@ export default class DungeonScene extends Phaser.Scene {
   // ── 主循环 ───────────────────────────────────────────────
 
   update(time) {
-    if (this.dead) return;
+    if (this.dead || !this.player || !this.mapReady) return;
 
-    // 移动
+    this._updateChunkExploration();
+
+    // 移动（键盘 / 摇杆 / 鼠标点击）
     const body = this.player.body;
-    const keyInput = this._readKeyboard();
-    if (keyInput.x !== 0 || keyInput.y !== 0) {
-      body.setVelocity(
-        new Phaser.Math.Vector2(keyInput.x, keyInput.y).normalize().scale(this.playerSpeed).x,
-        new Phaser.Math.Vector2(keyInput.x, keyInput.y).normalize().scale(this.playerSpeed).y
-      );
+    const moveInput = this._readMovementInput();
+    if (moveInput.x !== 0 || moveInput.y !== 0) {
+      const v = new Phaser.Math.Vector2(moveInput.x, moveInput.y).normalize().scale(this.playerSpeed);
+      body.setVelocity(v.x, v.y);
     } else {
       body.setVelocity(0, 0);
     }
+    this._updatePlayerAnim(body);
 
     // 技能按键
     this._checkSkillKeys(time);
@@ -292,8 +544,8 @@ export default class DungeonScene extends Phaser.Scene {
       this.buffDamage = 0;
     }
 
-    // 自动普攻：每帧选取攻击范围内最近的敌人
-    this.attackTarget = this._nearestEnemyInRange();
+    // 自动普攻：锁定目标或范围内最近敌人
+    this.attackTarget = this._resolveAttackTarget();
     if (this.attackTarget?.alive) {
       const dist = Phaser.Math.Distance.Between(
         this.player.x, this.player.y,
@@ -325,6 +577,7 @@ export default class DungeonScene extends Phaser.Scene {
   // ── 普攻 ─────────────────────────────────────────────────
 
   _attack(target) {
+    this._triggerPlayerAttackAnim();
     const isRanged = this.attackRange > BASIC_ATTACK_RANGE + 20;
     if (isRanged) {
       this._projectileFx(this.player.x, this.player.y, target.sprite.x, target.sprite.y);
@@ -567,12 +820,23 @@ export default class DungeonScene extends Phaser.Scene {
   }
 
   onEnemyDeath(enemy) {
-    this.killLog.push({ is_boss: enemy.isBoss, is_elite: enemy.isElite });
-    this.aliveCount -= 1;
-    if (this.aliveCount <= 0 && !this.cleared) {
+    if (enemy.isBoss && this.riftPhase === "boss") {
+      this.killLog.push({ is_boss: true, is_elite: false });
+      if (this.cleared) return;
       this.cleared = true;
-      this._banner("清空本层！正在结算…", 1200);
-      this.time.delayedCall(800, () => this._clearFloor());
+      this._banner("首领击败！正在结算奖励…", 1400);
+      this.time.delayedCall(900, () => this._clearFloor());
+      return;
+    }
+
+    if (this.riftPhase !== "explore") return;
+
+    this.killLog.push({ is_boss: enemy.isBoss, is_elite: enemy.isElite });
+    this.killProgress += 1;
+    this._syncRiftHud();
+
+    if (this.killProgress >= this.killQuota) {
+      this._triggerBossPhase();
     }
   }
 
@@ -607,7 +871,7 @@ export default class DungeonScene extends Phaser.Scene {
       .setStrokeStyle(2, 0xc9a227);
 
     const lines = [];
-    lines.push(`✓ 第 ${result.character.floor - 1 > 0 ? this.currentFloor : this.currentFloor} 层清场！`);
+    lines.push(`✓ 秘境通关 · 第 ${this.currentFloor} 层`);
     lines.push(`经验  +${result.total_exp}`);
     if (result.level_msgs.length) lines.push(result.level_msgs.join("  "));
     lines.push(`金币  +${result.total_gold}`);
@@ -671,6 +935,7 @@ export default class DungeonScene extends Phaser.Scene {
   _onPlayerDead() {
     if (this.dead) return;
     this.dead = true;
+    this.killLog = [];
     this.player.body.setVelocity(0, 0);
     this._showDefeatScreen();
   }
@@ -690,8 +955,9 @@ export default class DungeonScene extends Phaser.Scene {
     const title = this.add.text(px + W / 2, py + 24, "战败", {
       fontFamily: FONT, fontSize: "26px", color: "#d04040",
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(DEPTH + 2);
-    const sub = this.add.text(px + W / 2, py + 62, `第 ${this.currentFloor ?? "?"} 层挑战失败`, {
-      fontFamily: FONT, fontSize: "14px", color: "#a09090",
+    const sub = this.add.text(px + W / 2, py + 62,
+      `秘境失败 · 第 ${this.currentFloor ?? "?"} 层\n本轮奖励已全部失去`, {
+      fontFamily: FONT, fontSize: "14px", color: "#a09090", align: "center",
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(DEPTH + 2);
 
     const mkBtn = (label, x, y, color, bg, cb) => {

@@ -19,8 +19,9 @@ const SKILL_COLORS = {
 };
 
 export default class SkillBar {
-  constructor(scene, skills) {
+  constructor(scene, skills, onCast = null) {
     this.scene = scene;
+    this.onCast = onCast;
     this.slots = [];
     if (!skills || skills.length === 0) return;
     this._build(skills);
@@ -41,11 +42,16 @@ export default class SkillBar {
   _buildSlot(x, y, skill) {
     const iconColor = SKILL_COLORS[skill.range_type] || SKILL_COLORS.melee;
 
-    // 外框
+    // 外框（可点击施放技能）
     const bg = this.scene.add
       .rectangle(x, y, SLOT_W, SLOT_H, 0x1a1820, 0.92)
       .setOrigin(0, 0).setScrollFactor(0).setDepth(DEPTH)
-      .setStrokeStyle(1, 0x3d3544);
+      .setStrokeStyle(1, 0x3d3544)
+      .setInteractive({ useHandCursor: true });
+
+    bg.on("pointerdown", () => {
+      if (this.onCast) this.onCast(skill);
+    });
 
     // 技能图标色块
     const icon = this.scene.add

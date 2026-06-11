@@ -27,6 +27,35 @@ export default class Hud {
   _buildTopInfo() {
     this.nameText = this._text(12, 10, "", 16, "#c9a227");
     this.floorText = this._text(this.viewW - 12, 10, "", 14, "#e8e0d5").setOrigin(1, 0);
+    this._buildRiftBar();
+  }
+
+  _buildRiftBar() {
+    const barW = 280;
+    const barH = 14;
+    const x = (this.viewW - barW) / 2;
+    const y = 38;
+    this.riftBarW = barW;
+    this.riftLabel = this._text(x + barW / 2, y - 2, "秘境进度", 11, "#9a9088").setOrigin(0.5, 1);
+    this._bg(x, y, barW, barH);
+    this.riftFill = this._fill(x, y, barW, barH, 0xc9a227);
+    this.riftText = this._text(x + barW / 2, y + barH / 2, "0%", 11, "#ffffff").setOrigin(0.5);
+  }
+
+  updateRiftProgress(current, quota, phase = "explore") {
+    if (!this.riftFill) return;
+    const ratio = quota > 0 ? Phaser.Math.Clamp(current / quota, 0, 1) : 0;
+    this.riftFill.width = this.riftBarW * ratio;
+    const pct = Math.floor(ratio * 100);
+    if (phase === "boss") {
+      this.riftLabel.setText("首领战");
+      this.riftText.setText("BOSS");
+      this.riftFill.setFillStyle(0xd9534f);
+    } else {
+      this.riftLabel.setText("秘境进度");
+      this.riftText.setText(`${pct}%  (${current}/${quota})`);
+      this.riftFill.setFillStyle(0xc9a227);
+    }
   }
 
   _buildBars(character) {

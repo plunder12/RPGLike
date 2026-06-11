@@ -1,11 +1,21 @@
-// 基于 TEST_MAP 网格的 A* 寻路（0=可走，1=墙）。
+// A* 寻路 — 使用秘境动态网格（0=可走，1=墙）。
 
-import { TEST_MAP, MAP_COLS, MAP_ROWS, TILE } from "../constants.js";
+import { TILE } from "../constants.js";
 
 const NEIGHBORS = [
   [0, 1], [0, -1], [1, 0], [-1, 0],
   [1, 1], [1, -1], [-1, 1], [-1, -1],
 ];
+
+let _grid = null;
+let _cols = 0;
+let _rows = 0;
+
+export function setWalkGrid(grid, cols, rows) {
+  _grid = grid;
+  _cols = cols;
+  _rows = rows;
+}
 
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
@@ -13,8 +23,8 @@ function clamp(v, min, max) {
 
 export function worldToTile(x, y) {
   return {
-    col: clamp(Math.floor(x / TILE), 0, MAP_COLS - 1),
-    row: clamp(Math.floor(y / TILE), 0, MAP_ROWS - 1),
+    col: clamp(Math.floor(x / TILE), 0, _cols - 1),
+    row: clamp(Math.floor(y / TILE), 0, _rows - 1),
   };
 }
 
@@ -23,8 +33,8 @@ export function tileToWorld(col, row) {
 }
 
 function isWalkable(col, row) {
-  if (col < 0 || row < 0 || col >= MAP_COLS || row >= MAP_ROWS) return false;
-  return TEST_MAP[row][col] === 0;
+  if (!_grid || col < 0 || row < 0 || col >= _cols || row >= _rows) return false;
+  return _grid[row][col] === 0;
 }
 
 function heuristic(a, b) {
@@ -53,7 +63,7 @@ export function findPathWorld(startX, startY, endX, endY) {
   const gScore = new Map([[key(start.col, start.row), 0]]);
 
   let guard = 0;
-  while (open.length > 0 && guard++ < 800) {
+  while (open.length > 0 && guard++ < 1200) {
     open.sort((a, b) => a.f - b.f);
     const current = open.shift();
     const ck = key(current.col, current.row);
@@ -76,7 +86,6 @@ export function findPathWorld(startX, startY, endX, endY) {
       const nk = key(nc, nr);
       if (!isWalkable(nc, nr)) continue;
 
-      // 斜向移动时检查两侧是否被墙夹住
       if (dc !== 0 && dr !== 0) {
         if (!isWalkable(current.col + dc, current.row) ||
             !isWalkable(current.col, current.row + dr)) continue;

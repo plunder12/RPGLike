@@ -4,6 +4,17 @@
 export const TILE = 32;          // 单格像素
 export const PLAYER_SPEED = 200; // 像素/秒
 
+// Phase 5 美术资源
+export const ASSET_BASE = "/static/game/assets";
+export const CHAR_FRAME = 64;
+export const CHAR_SCALE = 0.5;   // 64px 帧 → 32px 显示
+export const PLAYER_CLASSES = ["barbarian", "wizard", "monk"];
+
+export const ENEMY_FRAME = 48;
+export const ENEMY_SCALE = 0.58;
+/** 已接入 spritesheet 的普通怪纹理 key */
+export const ENEMY_SPRITES = ["enemy_slime"];
+
 // ── 攻击范围（像素，世界坐标，zoom=1.5 时视觉距离 = 值×1.5）──
 export const BASIC_ATTACK_RANGE = 72;  // 默认近战普攻（约 2.25 tile）
 

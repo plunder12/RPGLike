@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>鏂囧瓧鏆楅粦 路 2D 鍦扮墷锛圥hase 0锛?/title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #0f0e12;
+      color: #e8e0d5;
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+      overflow: hidden;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    #game-root {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #game-root canvas {
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
+      border: 1px solid #3d3544;
+      image-rendering: pixelated;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-root"><canvas width="960" height="600" style="image-rendering: pixelated; width: 756px; height: 472.5px; margin-left: -1px; margin-top: 6px;"></canvas></div>
+  <!-- Phaser 3锛氫紭鍏堟湰鍦帮紙灞€鍩熺綉鏃犻渶澶栫綉锛夛紝澶辫触鍐嶅洖閫€ CDN -->
+  <script src="/static/game/lib/phaser.min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js'"></script>
+  <script type="module" src="/static/game/main.js?v=7"></script>
+
+
+</body></html>

@@ -13,6 +13,9 @@
       color: #e8e0d5;
       font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
       overflow: hidden;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
     #game-root {
       width: 100vw;
@@ -33,6 +36,6 @@
   <!-- Phaser 3：优先本地（局域网无需外网），失败再回退 CDN -->
   <script src="/static/game/lib/phaser.min.js"
     onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js'"></script>
-  <script type="module" src="/static/game/main.js?v=2"></script>
+  <script type="module" src="/static/game/main.js?v=7"></script>
 </body>
 </html>

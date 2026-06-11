@@ -1,0 +1,72 @@
+# 美术资源后处理配置
+# 运行: python process_assets.py
+
+paths:
+  raw_dir: data/raw_asset
+  output_dir: output
+
+# 地块：4×4 网格 → 32×32（对齐游戏 TILE=32）
+tiles:
+  source: 地牢素材合集.png
+  grid: [4, 4]
+  frame_size: 32
+  resample: nearest
+  # 按 (row, col) 命名；aliases 额外输出游戏 BootScene 占位 key 对应文件名
+  cells:
+    - [0, 0, floor_stone]
+    - [0, 1, wall_brick]
+    - [0, 2, wall_top]
+    - [0, 3, wall_top_cracked]
+    - [1, 0, floor_debris]
+    - [1, 1, wall_candle]
+    - [1, 2, wall_stone]
+    - [1, 3, wall_stone_cracked]
+    - [2, 0, floor_moss]
+    - [2, 1, wall_brick_moss]
+    - [2, 2, wall_corner_outer]
+    - [2, 3, wall_corner_inner]
+    - [3, 0, floor_spikes]
+    - [3, 1, floor_skull]
+    - [3, 2, door]
+    - [3, 3, chest]
+  aliases:
+    floor_stone: tile_floor
+    floor_moss: tile_floor_alt
+    wall_stone: tile_wall
+
+# 角色：3 行 × 4 列（idle / walk / attack）→ 64×64 单帧，并合并 spritesheet
+characters:
+  frame_size: 64
+  resample: nearest
+  bg_threshold: 40
+  rows:
+    - idle
+    - walk
+    - attack
+  sheets:
+    - source: 野蛮人.png
+      id: barbarian
+      name: 野蛮人
+    - source: 法师.png
+      id: wizard
+      name: 法师
+    - source: 武僧.png
+      id: monk
+      name: 武僧
+
+# 怪物：4 行 × 4 列（idle / walk / attack / death）
+enemies:
+  frame_size: 48
+  resample: nearest
+  bg_threshold: 40
+  rows:
+    - idle
+    - walk
+    - attack
+    - death
+  sheets:
+    - source: 怪物_史莱姆.png
+      id: slime
+      name: 史莱姆
+  game_keys:
+    slime: enemy_slime

@@ -1,0 +1,206 @@
+{
+  "tiles": {
+    "source": "地牢素材合集.png",
+    "grid": [
+      4,
+      4
+    ],
+    "frame_size": 32,
+    "cells": {
+      "floor_stone": {
+        "row": 0,
+        "col": 0,
+        "file": "tiles/floor_stone.png"
+      },
+      "wall_brick": {
+        "row": 0,
+        "col": 1,
+        "file": "tiles/wall_brick.png"
+      },
+      "wall_top": {
+        "row": 0,
+        "col": 2,
+        "file": "tiles/wall_top.png"
+      },
+      "wall_top_cracked": {
+        "row": 0,
+        "col": 3,
+        "file": "tiles/wall_top_cracked.png"
+      },
+      "floor_debris": {
+        "row": 1,
+        "col": 0,
+        "file": "tiles/floor_debris.png"
+      },
+      "wall_candle": {
+        "row": 1,
+        "col": 1,
+        "file": "tiles/wall_candle.png"
+      },
+      "wall_stone": {
+        "row": 1,
+        "col": 2,
+        "file": "tiles/wall_stone.png"
+      },
+      "wall_stone_cracked": {
+        "row": 1,
+        "col": 3,
+        "file": "tiles/wall_stone_cracked.png"
+      },
+      "floor_moss": {
+        "row": 2,
+        "col": 0,
+        "file": "tiles/floor_moss.png"
+      },
+      "wall_brick_moss": {
+        "row": 2,
+        "col": 1,
+        "file": "tiles/wall_brick_moss.png"
+      },
+      "wall_corner_outer": {
+        "row": 2,
+        "col": 2,
+        "file": "tiles/wall_corner_outer.png"
+      },
+      "wall_corner_inner": {
+        "row": 2,
+        "col": 3,
+        "file": "tiles/wall_corner_inner.png"
+      },
+      "floor_spikes": {
+        "row": 3,
+        "col": 0,
+        "file": "tiles/floor_spikes.png"
+      },
+      "floor_skull": {
+        "row": 3,
+        "col": 1,
+        "file": "tiles/floor_skull.png"
+      },
+      "door": {
+        "row": 3,
+        "col": 2,
+        "file": "tiles/door.png"
+      },
+      "chest": {
+        "row": 3,
+        "col": 3,
+        "file": "tiles/chest.png"
+      }
+    },
+    "aliases": {
+      "tile_floor": "game_ready/tiles/tile_floor.png",
+      "tile_floor_alt": "game_ready/tiles/tile_floor_alt.png",
+      "tile_wall": "game_ready/tiles/tile_wall.png"
+    }
+  },
+  "characters": {
+    "frame_size": 64,
+    "rows": [
+      "idle",
+      "walk",
+      "attack"
+    ],
+    "characters": {
+      "barbarian": {
+        "display_name": "野蛮人",
+        "source": "野蛮人.png",
+        "game_key": "barbarian",
+        "sheet": "characters/barbarian/barbarian.png",
+        "frames": {
+          "idle_0": "characters/barbarian/frames/idle_0.png",
+          "idle_1": "characters/barbarian/frames/idle_1.png",
+          "idle_2": "characters/barbarian/frames/idle_2.png",
+          "idle_3": "characters/barbarian/frames/idle_3.png",
+          "walk_0": "characters/barbarian/frames/walk_0.png",
+          "walk_1": "characters/barbarian/frames/walk_1.png",
+          "walk_2": "characters/barbarian/frames/walk_2.png",
+          "walk_3": "characters/barbarian/frames/walk_3.png",
+          "attack_0": "characters/barbarian/frames/attack_0.png",
+          "attack_1": "characters/barbarian/frames/attack_1.png",
+          "attack_2": "characters/barbarian/frames/attack_2.png",
+          "attack_3": "characters/barbarian/frames/attack_3.png"
+        },
+        "meta": "characters/barbarian/barbarian.meta.json"
+      },
+      "wizard": {
+        "display_name": "法师",
+        "source": "法师.png",
+        "game_key": "wizard",
+        "sheet": "characters/wizard/wizard.png",
+        "frames": {
+          "idle_0": "characters/wizard/frames/idle_0.png",
+          "idle_1": "characters/wizard/frames/idle_1.png",
+          "idle_2": "characters/wizard/frames/idle_2.png",
+          "idle_3": "characters/wizard/frames/idle_3.png",
+          "walk_0": "characters/wizard/frames/walk_0.png",
+          "walk_1": "characters/wizard/frames/walk_1.png",
+          "walk_2": "characters/wizard/frames/walk_2.png",
+          "walk_3": "characters/wizard/frames/walk_3.png",
+          "attack_0": "characters/wizard/frames/attack_0.png",
+          "attack_1": "characters/wizard/frames/attack_1.png",
+          "attack_2": "characters/wizard/frames/attack_2.png",
+          "attack_3": "characters/wizard/frames/attack_3.png"
+        },
+        "meta": "characters/wizard/wizard.meta.json"
+      },
+      "monk": {
+        "display_name": "武僧",
+        "source": "武僧.png",
+        "game_key": "monk",
+        "sheet": "characters/monk/monk.png",
+        "frames": {
+          "idle_0": "characters/monk/frames/idle_0.png",
+          "idle_1": "characters/monk/frames/idle_1.png",
+          "idle_2": "characters/monk/frames/idle_2.png",
+          "idle_3": "characters/monk/frames/idle_3.png",
+          "walk_0": "characters/monk/frames/walk_0.png",
+          "walk_1": "characters/monk/frames/walk_1.png",
+          "walk_2": "characters/monk/frames/walk_2.png",
+          "walk_3": "characters/monk/frames/walk_3.png",
+          "attack_0": "characters/monk/frames/attack_0.png",
+          "attack_1": "characters/monk/frames/attack_1.png",
+          "attack_2": "characters/monk/frames/attack_2.png",
+          "attack_3": "characters/monk/frames/attack_3.png"
+        },
+        "meta": "characters/monk/monk.meta.json"
+      }
+    }
+  },
+  "enemies": {
+    "frame_size": 48,
+    "rows": [
+      "idle",
+      "walk",
+      "attack",
+      "death"
+    ],
+    "enemies": {
+      "slime": {
+        "display_name": "史莱姆",
+        "source": "怪物_史莱姆.png",
+        "game_key": "enemy_slime",
+        "sheet": "enemies/slime/slime.png",
+        "frames": {
+          "idle_0": "enemies/slime/frames/idle_0.png",
+          "idle_1": "enemies/slime/frames/idle_1.png",
+          "idle_2": "enemies/slime/frames/idle_2.png",
+          "idle_3": "enemies/slime/frames/idle_3.png",
+          "walk_0": "enemies/slime/frames/walk_0.png",
+          "walk_1": "enemies/slime/frames/walk_1.png",
+          "walk_2": "enemies/slime/frames/walk_2.png",
+          "walk_3": "enemies/slime/frames/walk_3.png",
+          "attack_0": "enemies/slime/frames/attack_0.png",
+          "attack_1": "enemies/slime/frames/attack_1.png",
+          "attack_2": "enemies/slime/frames/attack_2.png",
+          "attack_3": "enemies/slime/frames/attack_3.png",
+          "death_0": "enemies/slime/frames/death_0.png",
+          "death_1": "enemies/slime/frames/death_1.png",
+          "death_2": "enemies/slime/frames/death_2.png",
+          "death_3": "enemies/slime/frames/death_3.png"
+        },
+        "meta": "enemies/slime/slime.meta.json"
+      }
+    }
+  }
+}

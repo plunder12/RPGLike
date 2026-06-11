@@ -141,8 +141,8 @@ class GameController:
         }
 
     def start_floor(self, name: str, target_floor: int | None = None) -> dict:
-        """为实时战斗准备本层怪物配置（不结算，仅生成数据）。"""
-        from config.constants import BOSS_FLOOR_INTERVAL, get_available_rarities
+        """为秘境实时战斗准备配置：分块刷怪 + 进度条 + 末段 BOSS。"""
+        from config.constants import get_available_rarities
         from models.monster import generate_monster
 
         char = self._require_char(name)
@@ -150,35 +150,43 @@ class GameController:
             target_floor = min(char.floor, MAX_FLOOR)
         target_floor = max(1, min(target_floor, MAX_FLOOR))
         is_replay = target_floor < char.floor
-        is_boss_floor = target_floor % BOSS_FLOOR_INTERVAL == 0
 
-        monsters = []
-        if is_boss_floor:
-            boss = generate_monster(target_floor)
-            monsters.append(self._monster_to_api(boss, mid=0))
-            adds = 2 + target_floor // 20
-            for i in range(adds):
+        num_chunks = random.randint(3, 5)
+        kill_quota = max(8, 10 + target_floor // 2)
+
+        chunk_spawns: list[list[dict]] = [[] for _ in range(num_chunks)]
+        mid = 0
+        for ci in range(num_chunks):
+            batch_size = random.randint(2, 4)
+            for _ in range(batch_size):
                 m = generate_monster(target_floor)
                 m.is_boss = False
-                m.is_elite = False
-                m.max_hp = int(m.max_hp * 0.35)
-                m.hp = m.max_hp
-                m.attack = int(m.attack * 0.6)
-                monsters.append(self._monster_to_api(m, mid=i + 1))
-        else:
-            count = random.randint(5, 8)
-            for i in range(count):
-                m = generate_monster(target_floor)
-                monsters.append(self._monster_to_api(m, mid=i))
+                chunk_spawns[ci].append(self._monster_to_api(m, mid=mid))
+                mid += 1
+
+        while mid < kill_quota:
+            ci = mid % num_chunks
+            m = generate_monster(target_floor)
+            m.is_boss = False
+            chunk_spawns[ci].append(self._monster_to_api(m, mid=mid))
+            mid += 1
+
+        boss = generate_monster(target_floor)
+        boss.is_boss = True
+        boss.is_elite = False
 
         return {
             "floor": target_floor,
             "mode": "farm" if is_replay else "push",
-            "is_boss_floor": is_boss_floor,
             "rarities": get_available_rarities(target_floor),
-            "monsters": monsters,
             "character": self.character_to_api(char),
             "active_skills": self._skills_to_api(char),
+            "rift": {
+                "num_chunks": num_chunks,
+                "kill_quota": kill_quota,
+                "chunk_spawns": chunk_spawns,
+                "boss": self._monster_to_api(boss, mid=9999),
+            },
         }
 
     def _skills_to_api(self, char) -> list[dict]:

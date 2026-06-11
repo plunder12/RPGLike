@@ -1,8 +1,10 @@
 // UIScene：与 DungeonScene 并行运行的独立 UI 层（不受地牢相机缩放影响）。
-// 承载 HUD（血条/资源条）、SkillBar（技能槽 Q/E/R/F）和暂停菜单。
+// 承载 HUD、SkillBar、虚拟摇杆（触屏）和暂停菜单。
 
 import Hud from "../ui/Hud.js";
 import SkillBar from "../ui/SkillBar.js";
+import VirtualJoystick from "../ui/VirtualJoystick.js";
+import { isTouchDevice } from "../systems/inputZones.js";
 
 const FONT = "Microsoft YaHei, sans-serif";
 
@@ -18,6 +20,7 @@ export default class UIScene extends Phaser.Scene {
     this._pauseObjs = [];
     this.hud = null;
     this.skillBar = null;
+    this.joystick = null;
     this._escHandler = null;
   }
 
@@ -26,9 +29,28 @@ export default class UIScene extends Phaser.Scene {
       this.hud = new Hud(this, this.character);
     }
     if (this.skills.length > 0) {
-      this.skillBar = new SkillBar(this, this.skills);
+      this._buildSkillBar(this.skills);
+    }
+    if (isTouchDevice(this.game)) {
+      this.joystick = new VirtualJoystick(this);
     }
     this._buildPauseBtn();
+  }
+
+  _buildSkillBar(skills) {
+    const onCast = (skill) => {
+      const dungeon = this.scene.get("DungeonScene");
+      if (dungeon?.castSkillFromUi) dungeon.castSkillFromUi(skill);
+    };
+    this.skillBar = new SkillBar(this, skills, onCast);
+  }
+
+  getJoystickVector() {
+    return this.joystick?.getVector() ?? { x: 0, y: 0, active: false };
+  }
+
+  isJoystickAt(x, y) {
+    return this.joystick?.containsScreenPoint(x, y) ?? false;
   }
 
   // ── 暂停按钮 ──────────────────────────────
@@ -44,7 +66,6 @@ export default class UIScene extends Phaser.Scene {
     btn.on("pointerdown", () => this._togglePause());
     this._pauseBtn = btn;
 
-    // ESC 键也触发暂停菜单（保存引用以便 shutdown 时移除）
     this._escHandler = () => this._togglePause();
     this.input.keyboard.on("keydown-ESC", this._escHandler);
   }
@@ -55,6 +76,8 @@ export default class UIScene extends Phaser.Scene {
       this.input.keyboard.off("keydown-ESC", this._escHandler);
       this._escHandler = null;
     }
+    this.joystick?.destroy();
+    this.joystick = null;
     const dungeon = this.scene.get("DungeonScene");
     if (dungeon?.scene?.isPaused()) dungeon.scene.resume();
   }
@@ -120,17 +143,22 @@ export default class UIScene extends Phaser.Scene {
     if (dungeon) dungeon.scene.resume();
   }
 
-  // ── 公开方法（供 DungeonScene 调用）──────────
   initSkills(skills) {
     this.skills = skills;
     if (!this.skillBar && skills.length > 0) {
-      this.skillBar = new SkillBar(this, skills);
+      this._buildSkillBar(skills);
     }
   }
 
   updateCharacter(character) {
     this.character = character;
     if (this.hud) this.hud.update(character);
+  }
+
+  updateRiftProgress(current, quota, phase) {
+    if (this.hud?.updateRiftProgress) {
+      this.hud.updateRiftProgress(current, quota, phase);
+    }
   }
 
   update(time) {

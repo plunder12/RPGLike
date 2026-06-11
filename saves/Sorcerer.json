@@ -2,12 +2,34 @@
   "name": "Sorcerer",
   "class_id": "wizard",
   "level": 1,
-  "exp": 29,
-  "hp": 80,
-  "resource": 37,
+  "exp": 99,
+  "hp": 180,
+  "resource": 120,
   "floor": 2,
   "highest_floor": 1,
-  "gold": 13,
+  "gold": 43,
+  "skill_points": 0,
+  "skill_ranks": {
+    "basic_attack": 1
+  },
+  "forge_levels": {
+    "weapon": 0,
+    "helm": 0,
+    "chest": 0,
+    "gloves": 0,
+    "boots": 0,
+    "ring": 0
+  },
+  "forge_materials": {
+    "普通": 7,
+    "稀有": 0,
+    "史诗": 0,
+    "传说": 0
+  },
+  "bonus_hp": 0,
+  "bonus_attack": 0,
+  "bonus_defense": 0,
+  "bonus_resource": 0,
   "equipment": {
     "weapon": null,
     "helm": null,
@@ -23,6 +45,81 @@
       "rarity": "普通",
       "floor": 1,
       "affixes": []
+    },
+    {
+      "slot": "ring",
+      "name": "铁戒指",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.069
+        }
+      ]
+    },
+    {
+      "slot": "weapon",
+      "name": "战斧",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "crit_damage",
+          "display_name": "暴击伤害",
+          "value": 0.137
+        }
+      ]
+    },
+    {
+      "slot": "boots",
+      "name": "奥术靴子",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "move_speed",
+          "display_name": "移速",
+          "value": 14
+        }
+      ]
+    },
+    {
+      "slot": "helm",
+      "name": "秘银头盔",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 104
+        },
+        {
+          "stat_key": "hp_regen",
+          "display_name": "每回合回血",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "slot": "ring",
+      "name": "秘银戒指",
+      "rarity": "普通",
+      "floor": 1,
+      "affixes": [
+        {
+          "stat_key": "resource_regen",
+          "display_name": "每回合回能",
+          "value": 10
+        },
+        {
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.082
+        }
+      ]
     }
   ]
 }
