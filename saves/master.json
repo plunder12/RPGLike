@@ -1,18 +1,21 @@
 {
   "name": "master",
   "class_id": "barbarian",
-  "level": 7,
-  "exp": 439,
-  "hp": 628,
-  "resource": 116,
-  "floor": 9,
-  "highest_floor": 8,
-  "gold": 972,
-  "skill_points": 2,
+  "level": 9,
+  "exp": 713,
+  "hp": 787,
+  "resource": 124,
+  "floor": 10,
+  "highest_floor": 9,
+  "gold": 1740,
+  "skill_points": 1,
   "skill_ranks": {
     "basic_attack": 1,
     "whirlwind": 2,
-    "ground_slam": 2
+    "ground_slam": 2,
+    "war_cry": 1,
+    "bloodthirst": 1,
+    "rampage": 1
   },
   "forge_levels": {
     "weapon": 4,
@@ -23,93 +26,98 @@
     "ring": 0
   },
   "forge_materials": {
-    "普通": 67,
+    "普通": 121,
     "稀有": 0,
     "史诗": 0,
     "传说": 0
   },
-  "bonus_hp": 32,
-  "bonus_attack": 8,
-  "bonus_defense": 4,
-  "bonus_resource": 16,
+  "bonus_hp": 48,
+  "bonus_attack": 12,
+  "bonus_defense": 6,
+  "bonus_resource": 24,
   "equipment": {
     "weapon": {
       "slot": "weapon",
-      "name": "拳套",
+      "name": "匕首",
       "rarity": "普通",
-      "floor": 4,
+      "floor": 6,
       "affixes": [
         {
           "stat_key": "crit_damage",
           "display_name": "暴击伤害",
-          "value": 0.254
+          "value": 0.264
+        },
+        {
+          "stat_key": "attack",
+          "display_name": "攻击",
+          "value": 57
         }
       ]
     },
     "helm": {
       "slot": "helm",
-      "name": "钢头盔",
+      "name": "远古头盔",
       "rarity": "普通",
-      "floor": 5,
+      "floor": 7,
       "affixes": [
         {
-          "stat_key": "defense",
-          "display_name": "防御",
-          "value": 18
+          "stat_key": "hp_regen",
+          "display_name": "每回合回血",
+          "value": 17
+        },
+        {
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 101
         }
       ]
     },
     "chest": {
       "slot": "chest",
-      "name": "钢胸甲",
+      "name": "远古胸甲",
       "rarity": "普通",
-      "floor": 5,
+      "floor": 7,
       "affixes": [
         {
           "stat_key": "hp_regen",
           "display_name": "每回合回血",
-          "value": 15
+          "value": 12
         },
         {
           "stat_key": "max_hp",
           "display_name": "生命",
-          "value": 133
+          "value": 216
         }
       ]
     },
     "gloves": {
       "slot": "gloves",
-      "name": "铁手套",
+      "name": "秘银手套",
       "rarity": "普通",
-      "floor": 5,
+      "floor": 6,
       "affixes": [
         {
           "stat_key": "skill_damage",
           "display_name": "技能伤害",
-          "value": 0.11
-        },
-        {
-          "stat_key": "crit_rate",
-          "display_name": "暴击率",
-          "value": 0.073
+          "value": 0.25
         }
       ]
     },
     "boots": {
       "slot": "boots",
-      "name": "钢靴子",
+      "name": "铁靴子",
       "rarity": "普通",
-      "floor": 4,
+      "floor": 6,
       "affixes": [
         {
-          "stat_key": "max_hp",
-          "display_name": "生命",
-          "value": 79
+          "stat_key": "hp_regen",
+          "display_name": "每回合回血",
+          "value": 8
         },
         {
           "stat_key": "move_speed",
           "display_name": "移速",
-          "value": 19
+          "value": 15
         }
       ]
     },
@@ -133,19 +141,6 @@
     }
   },
   "inventory": [
-    {
-      "slot": "helm",
-      "name": "铁头盔",
-      "rarity": "普通",
-      "floor": 6,
-      "affixes": [
-        {
-          "stat_key": "defense",
-          "display_name": "防御",
-          "value": 20
-        }
-      ]
-    },
     {
       "slot": "chest",
       "name": "铁胸甲",
@@ -182,32 +177,6 @@
           "stat_key": "skill_damage",
           "display_name": "技能伤害",
           "value": 0.141
-        }
-      ]
-    },
-    {
-      "slot": "gloves",
-      "name": "秘银手套",
-      "rarity": "普通",
-      "floor": 6,
-      "affixes": [
-        {
-          "stat_key": "skill_damage",
-          "display_name": "技能伤害",
-          "value": 0.25
-        }
-      ]
-    },
-    {
-      "slot": "helm",
-      "name": "远古头盔",
-      "rarity": "普通",
-      "floor": 4,
-      "affixes": [
-        {
-          "stat_key": "crit_rate",
-          "display_name": "暴击率",
-          "value": 0.078
         }
       ]
     },
@@ -305,42 +274,6 @@
       ]
     },
     {
-      "slot": "boots",
-      "name": "铁靴子",
-      "rarity": "普通",
-      "floor": 6,
-      "affixes": [
-        {
-          "stat_key": "hp_regen",
-          "display_name": "每回合回血",
-          "value": 8
-        },
-        {
-          "stat_key": "move_speed",
-          "display_name": "移速",
-          "value": 15
-        }
-      ]
-    },
-    {
-      "slot": "weapon",
-      "name": "匕首",
-      "rarity": "普通",
-      "floor": 6,
-      "affixes": [
-        {
-          "stat_key": "crit_damage",
-          "display_name": "暴击伤害",
-          "value": 0.264
-        },
-        {
-          "stat_key": "attack",
-          "display_name": "攻击",
-          "value": 57
-        }
-      ]
-    },
-    {
       "slot": "ring",
       "name": "远古戒指",
       "rarity": "普通",
@@ -385,24 +318,6 @@
         {
           "stat_key": "hp_regen",
           "display_name": "每回合回血",
-          "value": 17
-        },
-        {
-          "stat_key": "max_hp",
-          "display_name": "生命",
-          "value": 101
-        }
-      ]
-    },
-    {
-      "slot": "helm",
-      "name": "远古头盔",
-      "rarity": "普通",
-      "floor": 7,
-      "affixes": [
-        {
-          "stat_key": "hp_regen",
-          "display_name": "每回合回血",
           "value": 14
         }
       ]
@@ -421,20 +336,263 @@
       ]
     },
     {
-      "slot": "chest",
-      "name": "远古胸甲",
+      "slot": "helm",
+      "name": "钢头盔",
       "rarity": "普通",
-      "floor": 7,
+      "floor": 5,
+      "affixes": [
+        {
+          "stat_key": "defense",
+          "display_name": "防御",
+          "value": 18
+        }
+      ]
+    },
+    {
+      "slot": "gloves",
+      "name": "铁手套",
+      "rarity": "普通",
+      "floor": 5,
+      "affixes": [
+        {
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.11
+        },
+        {
+          "stat_key": "crit_rate",
+          "display_name": "暴击率",
+          "value": 0.073
+        }
+      ]
+    },
+    {
+      "slot": "helm",
+      "name": "铁头盔",
+      "rarity": "普通",
+      "floor": 6,
+      "affixes": [
+        {
+          "stat_key": "defense",
+          "display_name": "防御",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "slot": "boots",
+      "name": "钢靴子",
+      "rarity": "普通",
+      "floor": 4,
+      "affixes": [
+        {
+          "stat_key": "max_hp",
+          "display_name": "生命",
+          "value": 79
+        },
+        {
+          "stat_key": "move_speed",
+          "display_name": "移速",
+          "value": 19
+        }
+      ]
+    },
+    {
+      "slot": "weapon",
+      "name": "拳套",
+      "rarity": "普通",
+      "floor": 4,
+      "affixes": [
+        {
+          "stat_key": "crit_damage",
+          "display_name": "暴击伤害",
+          "value": 0.254
+        }
+      ]
+    },
+    {
+      "slot": "helm",
+      "name": "远古头盔",
+      "rarity": "普通",
+      "floor": 4,
+      "affixes": [
+        {
+          "stat_key": "crit_rate",
+          "display_name": "暴击率",
+          "value": 0.078
+        }
+      ]
+    },
+    {
+      "slot": "chest",
+      "name": "钢胸甲",
+      "rarity": "普通",
+      "floor": 5,
       "affixes": [
         {
           "stat_key": "hp_regen",
           "display_name": "每回合回血",
-          "value": 12
+          "value": 15
         },
         {
           "stat_key": "max_hp",
           "display_name": "生命",
-          "value": 216
+          "value": 133
+        }
+      ]
+    },
+    {
+      "slot": "ring",
+      "name": "铁戒指",
+      "rarity": "普通",
+      "floor": 7,
+      "affixes": [
+        {
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.204
+        }
+      ]
+    },
+    {
+      "slot": "weapon",
+      "name": "巨锤",
+      "rarity": "普通",
+      "floor": 7,
+      "affixes": [
+        {
+          "stat_key": "crit_damage",
+          "display_name": "暴击伤害",
+          "value": 0.149
+        }
+      ]
+    },
+    {
+      "slot": "ring",
+      "name": "秘银戒指",
+      "rarity": "普通",
+      "floor": 7,
+      "affixes": [
+        {
+          "stat_key": "resource_regen",
+          "display_name": "每回合回能",
+          "value": 15
+        },
+        {
+          "stat_key": "hp_regen",
+          "display_name": "每回合回血",
+          "value": 9
+        }
+      ]
+    },
+    {
+      "slot": "weapon",
+      "name": "拳套",
+      "rarity": "普通",
+      "floor": 7,
+      "affixes": [
+        {
+          "stat_key": "crit_rate",
+          "display_name": "暴击率",
+          "value": 0.131
+        },
+        {
+          "stat_key": "attack",
+          "display_name": "攻击",
+          "value": 38
+        }
+      ]
+    },
+    {
+      "slot": "gloves",
+      "name": "钢手套",
+      "rarity": "普通",
+      "floor": 7,
+      "affixes": [
+        {
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.217
+        },
+        {
+          "stat_key": "resource_regen",
+          "display_name": "每回合回能",
+          "value": 12
+        }
+      ]
+    },
+    {
+      "slot": "helm",
+      "name": "奥术头盔",
+      "rarity": "普通",
+      "floor": 7,
+      "affixes": [
+        {
+          "stat_key": "crit_rate",
+          "display_name": "暴击率",
+          "value": 0.104
+        }
+      ]
+    },
+    {
+      "slot": "boots",
+      "name": "铁靴子",
+      "rarity": "普通",
+      "floor": 7,
+      "affixes": [
+        {
+          "stat_key": "move_speed",
+          "display_name": "移速",
+          "value": 19
+        }
+      ]
+    },
+    {
+      "slot": "weapon",
+      "name": "战斧",
+      "rarity": "普通",
+      "floor": 7,
+      "affixes": [
+        {
+          "stat_key": "crit_rate",
+          "display_name": "暴击率",
+          "value": 0.114
+        },
+        {
+          "stat_key": "crit_damage",
+          "display_name": "暴击伤害",
+          "value": 0.188
+        }
+      ]
+    },
+    {
+      "slot": "weapon",
+      "name": "长剑",
+      "rarity": "普通",
+      "floor": 7,
+      "affixes": [
+        {
+          "stat_key": "attack",
+          "display_name": "攻击",
+          "value": 57
+        },
+        {
+          "stat_key": "skill_damage",
+          "display_name": "技能伤害",
+          "value": 0.22
+        }
+      ]
+    },
+    {
+      "slot": "helm",
+      "name": "铁头盔",
+      "rarity": "普通",
+      "floor": 7,
+      "affixes": [
+        {
+          "stat_key": "crit_rate",
+          "display_name": "暴击率",
+          "value": 0.061
         }
       ]
     }

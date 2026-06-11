@@ -26,6 +26,8 @@ const PLAYER_ATTACK_CD = 450;
 const BASIC_RESOURCE_GAIN = 10;
 const MOVE_ARRIVAL = 14;
 const ENEMY_CLICK_RADIUS = 34;
+/** 首领刷新：与玩家至少相隔的曼哈顿格数，保证反应时间 */
+const BOSS_SPAWN_MIN_DIST = 5;
 
 export default class DungeonScene extends Phaser.Scene {
   constructor() {
@@ -545,14 +547,40 @@ export default class DungeonScene extends Phaser.Scene {
     this._syncRiftHud();
   }
 
+  /** 首领刷新点：在首领房间内选远离玩家的地面格，避免贴脸 */
+  _pickBossSpawnPos() {
+    const lastChunk = this.riftMap.chunkCount - 1;
+    let spots = this._getChunkSpawnSpots(lastChunk);
+    if (!spots.length) {
+      spots = [...(this.riftMap.spawnPoints[lastChunk] || [])];
+    }
+
+    const { colStart } = getBossArenaBounds(this.riftMap.chunkCount);
+    const fallback = () => tileCenter(colStart + CHUNK_COLS - 4, 6);
+
+    if (!spots.length || !this.player?.active) return fallback();
+
+    const pCol = Math.floor(this.player.x / TILE);
+    const pRow = Math.floor(this.player.y / TILE);
+    const distOf = (spot) =>
+      Math.abs(spot.col - pCol) + Math.abs(spot.row - pRow);
+
+    const safe = spots.filter((s) => distOf(s) >= BOSS_SPAWN_MIN_DIST);
+    const pool = safe.length ? safe : spots;
+    pool.sort((a, b) => distOf(b) - distOf(a));
+
+    const topCount = Math.max(1, Math.ceil(pool.length * 0.4));
+    const pick = pool[Phaser.Math.Between(0, topCount - 1)];
+    return { x: pick.x, y: pick.y };
+  }
+
   _beginBossFight() {
     if (this.riftPhase === "boss") return;
     this.riftPhase = "boss";
     this._banner("通道封闭！首领降临！", 2400);
     this._sealBossArena();
 
-    const { colStart } = getBossArenaBounds(this.riftMap.chunkCount);
-    const pos = tileCenter(colStart + Math.floor(CHUNK_COLS / 2), 6);
+    const pos = this._pickBossSpawnPos();
     const boss = new Enemy(this, pos.x, pos.y, this.bossData);
     this.enemyGroup.add(boss.sprite);
     this.enemies.push(boss);
@@ -672,6 +700,33 @@ export default class DungeonScene extends Phaser.Scene {
 
   // ── 技能施放 ─────────────────────────────────────────────
 
+  /** 指定型：范围内需有敌人；指向型（aoe/heal/buff）可直接施放 */
+  _skillRequiresTarget(skill) {
+    return skill.range_type === "melee"
+      || skill.range_type === "ranged"
+      || skill.range_type === "explosion";
+  }
+
+  _skillCastRange(skill) {
+    if (skill.range_type === "melee") return SKILL_RANGES.melee;
+    if (skill.range_type === "ranged" || skill.range_type === "explosion") {
+      return SKILL_RANGES.ranged;
+    }
+    return 0;
+  }
+
+  _resolveSkillTarget(skill) {
+    const range = this._skillCastRange(skill);
+    const locked = this.attackTarget?.alive ? this.attackTarget : null;
+    if (locked) {
+      const d = Phaser.Math.Distance.Between(
+        this.player.x, this.player.y, locked.sprite.x, locked.sprite.y
+      );
+      if (d <= range) return locked;
+    }
+    return this._nearestEnemyInRange(range);
+  }
+
   _castSkill(skill, time) {
     if (time < (skill.nextReadyAt || 0)) return; // CD 中
     if (this.playerResource < skill.resource_cost) {
@@ -679,7 +734,16 @@ export default class DungeonScene extends Phaser.Scene {
       return;
     }
 
-    // 消耗 CD 与资源
+    let target = null;
+    if (this._skillRequiresTarget(skill)) {
+      target = this._resolveSkillTarget(skill);
+      if (!target) {
+        this._floatText(this.player.x, this.player.y - 10, "无目标", "#9a9088");
+        return;
+      }
+    }
+
+    // 校验通过后再消耗 CD 与资源
     skill.nextReadyAt = time + skill.cd_ms;
     this.playerResource = Math.max(0, this.playerResource - skill.resource_cost);
     this._syncHud();
@@ -691,11 +755,11 @@ export default class DungeonScene extends Phaser.Scene {
     } else if (skill.range_type === "aoe") {
       this._castAoe(skill);
     } else if (skill.range_type === "explosion") {
-      this._castExplosion(skill);
+      this._castExplosion(skill, target);
     } else if (skill.range_type === "ranged") {
-      this._castRanged(skill);
+      this._castRanged(skill, target);
     } else {
-      this._castMelee(skill);
+      this._castMelee(skill, target);
     }
 
     // 控制技能：对范围内所有怪物施加减速
@@ -738,11 +802,7 @@ export default class DungeonScene extends Phaser.Scene {
     if (hit === 0) this._floatText(this.player.x, this.player.y - 10, "未命中", "#9a9088");
   }
 
-  _castRanged(skill) {
-    const range = SKILL_RANGES.ranged;
-    const target = (this.attackTarget?.alive ? this.attackTarget : null)
-      || this._nearestEnemyInRange(range);
-    if (!target) { this._floatText(this.player.x, this.player.y - 10, "无目标", "#9a9088"); return; }
+  _castRanged(skill, target) {
     const { damage, crit } = skillHitDamage(this.character.stats, skill, this.buffDamage);
     target.takeDamage(damage);
     this._floatText(target.sprite.x, target.sprite.y - 10,
@@ -751,15 +811,8 @@ export default class DungeonScene extends Phaser.Scene {
   }
 
   /** 投射命中点爆炸：一次 roll 伤害，爆炸范围内所有敌人受到相同数值 */
-  _castExplosion(skill) {
-    const castRange = SKILL_RANGES.ranged;
+  _castExplosion(skill, target) {
     const blastRange = SKILL_RANGES.explosion;
-    const target = (this.attackTarget?.alive ? this.attackTarget : null)
-      || this._nearestEnemyInRange(castRange);
-    if (!target) {
-      this._floatText(this.player.x, this.player.y - 10, "无目标", "#9a9088");
-      return;
-    }
     const { damage, crit } = skillHitDamage(this.character.stats, skill, this.buffDamage);
     const color = crit ? "#ffd54a" : "#ff7a3a";
     this._fireballFx(this.player.x, this.player.y, target, (cx, cy) => {
@@ -779,11 +832,7 @@ export default class DungeonScene extends Phaser.Scene {
     });
   }
 
-  _castMelee(skill) {
-    const range = SKILL_RANGES.melee;
-    const target = (this.attackTarget?.alive ? this.attackTarget : null)
-      || this._nearestEnemyInRange(range);
-    if (!target) { this._floatText(this.player.x, this.player.y - 10, "无目标", "#9a9088"); return; }
+  _castMelee(skill, target) {
     const { damage, crit } = skillHitDamage(this.character.stats, skill, this.buffDamage);
     target.takeDamage(damage);
     this._floatText(target.sprite.x, target.sprite.y - 10,

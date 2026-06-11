@@ -1,8 +1,8 @@
 {
   "texture": "monk",
   "file": "characters/monk/monk.png",
-  "frameWidth": 64,
-  "frameHeight": 64,
+  "frameWidth": 192,
+  "frameHeight": 192,
   "columns": 4,
   "rows": 3,
   "animations": {

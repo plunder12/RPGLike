@@ -10,7 +10,7 @@ import {
   ENEMY_SPRITES,
 } from "../constants.js";
 
-const ASSET_VER = "2";
+const ASSET_VER = "3";
 
 export default class BootScene extends Phaser.Scene {
   constructor() {

@@ -1,8 +1,8 @@
 {
   "texture": "enemy_slime",
   "file": "enemies/slime/slime.png",
-  "frameWidth": 48,
-  "frameHeight": 48,
+  "frameWidth": 128,
+  "frameHeight": 128,
   "columns": 4,
   "rows": 4,
   "animations": {

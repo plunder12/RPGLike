@@ -95,7 +95,7 @@
     }
   },
   "characters": {
-    "frame_size": 64,
+    "frame_size": 192,
     "rows": [
       "idle",
       "walk",
@@ -168,7 +168,7 @@
     }
   },
   "enemies": {
-    "frame_size": 48,
+    "frame_size": 128,
     "rows": [
       "idle",
       "walk",

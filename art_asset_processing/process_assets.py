@@ -75,8 +75,8 @@ def fit_frame(img: Image.Image, size: int, resample: Image.Resampling) -> Image.
     if img.width == 0 or img.height == 0:
         return canvas
     scale = min(size / img.width, size / img.height)
-    nw = max(1, int(img.width * scale))
-    nh = max(1, int(img.height * scale))
+    nw = max(1, round(img.width * scale))
+    nh = max(1, round(img.height * scale))
     resized = img.resize((nw, nh), resample)
     ox = (size - nw) // 2
     oy = (size - nh) // 2
@@ -91,7 +91,7 @@ def resize_tile(img: Image.Image, size: int, resample: Image.Resampling) -> Imag
 
 def save_png(img: Image.Image, path: Path) -> None:
     ensure_dir(path.parent)
-    img.save(path, format="PNG", optimize=True)
+    img.save(path, format="PNG", compress_level=1)
 
 
 def process_tiles(cfg: dict, raw_dir: Path, out_dir: Path) -> dict:

@@ -34,10 +34,10 @@ tiles:
     floor_moss: tile_floor_alt
     wall_stone: tile_wall
 
-# 角色：3 行 × 4 列（idle / walk / attack）→ 64×64 单帧，并合并 spritesheet
+# 角色：3 行 × 4 列（idle / walk / attack）→ 192×192 单帧（原图单格 ~313×418，尽量保留细节）
 characters:
-  frame_size: 64
-  resample: nearest
+  frame_size: 192
+  resample: lanczos
   bg_threshold: 40
   rows:
     - idle
@@ -54,10 +54,10 @@ characters:
       id: monk
       name: 武僧
 
-# 怪物：4 行 × 4 列（idle / walk / attack / death）
+# 怪物：4 行 × 4 列（idle / walk / attack / death）→ 128×128 单帧
 enemies:
-  frame_size: 48
-  resample: nearest
+  frame_size: 128
+  resample: lanczos
   bg_threshold: 40
   rows:
     - idle

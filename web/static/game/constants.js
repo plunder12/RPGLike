@@ -6,12 +6,12 @@ export const PLAYER_SPEED = 200; // 像素/秒
 
 // Phase 5 美术资源
 export const ASSET_BASE = "/static/game/assets";
-export const CHAR_FRAME = 64;
-export const CHAR_SCALE = 0.5;   // 64px 帧 → 32px 显示
+export const CHAR_FRAME = 192;
+export const CHAR_SCALE = 32 / CHAR_FRAME; // 192px 帧 → 32px 显示（与旧 64×0.5 一致）
 export const PLAYER_CLASSES = ["barbarian", "wizard", "monk"];
 
-export const ENEMY_FRAME = 48;
-export const ENEMY_SCALE = 0.58;
+export const ENEMY_FRAME = 128;
+export const ENEMY_SCALE = (48 * 0.58) / ENEMY_FRAME; // 保持与旧 48×0.58 相近的屏幕尺寸
 /** 已接入 spritesheet 的普通怪纹理 key */
 export const ENEMY_SPRITES = ["enemy_slime"];
 
