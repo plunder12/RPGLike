@@ -44,6 +44,11 @@ class InventoryReq(BaseModel):
     index: int = Field(ge=0)
 
 
+class InventorySettingsReq(BaseModel):
+    auto_sell_worse: bool | None = None
+    auto_dismantle_worse: bool | None = None
+
+
 class ForgeReq(BaseModel):
     slot: str
 
@@ -185,6 +190,18 @@ def api_sell_all(name: str):
 def api_dismantle_all(name: str):
     try:
         return game.dismantle_all(name)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/characters/{name}/inventory/settings")
+def api_inventory_settings(name: str, body: InventorySettingsReq):
+    try:
+        return game.set_inventory_settings(
+            name,
+            auto_sell_worse=body.auto_sell_worse,
+            auto_dismantle_worse=body.auto_dismantle_worse,
+        )
     except ValueError as e:
         raise HTTPException(400, str(e))
 

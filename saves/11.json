@@ -2,12 +2,12 @@
   "name": "11",
   "class_id": "wizard",
   "level": 20,
-  "exp": 17459,
+  "exp": 20951,
   "hp": 3800,
   "resource": 234,
   "floor": 29,
   "highest_floor": 28,
-  "gold": 5083,
+  "gold": 7278,
   "skill_points": 3,
   "skill_ranks": {
     "basic_attack": 1,
@@ -27,8 +27,8 @@
     "ring": 0
   },
   "forge_materials": {
-    "普通": 59,
-    "稀有": 156,
+    "普通": 153,
+    "稀有": 189,
     "史诗": 301,
     "传说": 0
   },
@@ -737,5 +737,7 @@
         }
       ]
     }
-  ]
+  ],
+  "auto_sell_worse": false,
+  "auto_dismantle_worse": true
 }

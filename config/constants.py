@@ -143,4 +143,4 @@ def get_drop_chance(is_boss: bool, is_elite: bool) -> float:
         return DROP_CHANCE_ELITE
     return DROP_CHANCE_NORMAL
 
-INVENTORY_MAX = 30
+INVENTORY_MAX = 100

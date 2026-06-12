@@ -1000,8 +1000,23 @@ export default class DungeonScene extends Phaser.Scene {
       result.drops.slice(0, 4).forEach(d => lines.push(d.summary));
       if (result.drops.length > 4) lines.push(`… 等共 ${result.drops.length} 件`);
     }
-    if (result.overflow_count > 0)
-      lines.push(`⚠ 背包已满，${result.overflow_count} 件掉落未拾取`);
+    if (result.auto_sold?.length) {
+      lines.push("─── 自动出售 ───");
+      const soldGold = result.auto_sold.reduce((s, d) => s + (d.gold || 0), 0);
+      result.auto_sold.slice(0, 3).forEach(d => lines.push(`${d.summary}  +${d.gold}金`));
+      if (result.auto_sold.length > 3) lines.push(`… 等共 ${result.auto_sold.length} 件，+${soldGold}金`);
+      else if (result.auto_sold.length > 1) lines.push(`合计 +${soldGold}金`);
+    }
+    if (result.auto_dismantled?.length) {
+      lines.push("─── 自动分解 ───");
+      result.auto_dismantled.slice(0, 3).forEach(d =>
+        lines.push(`${d.summary}  →${d.qty}×${d.tier}`)
+      );
+      if (result.auto_dismantled.length > 3)
+        lines.push(`… 等共 ${result.auto_dismantled.length} 件`);
+    }
+    if (result.inventory_over_limit)
+      lines.push(`⚠ 背包超载 ${result.inventory_count}/${result.inventory_max}，回城后需清理才能再进本`);
 
     // 文字内容
     this.add

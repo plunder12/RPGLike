@@ -37,6 +37,8 @@ class Character:
     bonus_resource: int = 0
     equipment: dict[str, Equipment | None] = field(default_factory=dict)
     inventory: list[Equipment] = field(default_factory=list)
+    auto_sell_worse: bool = False
+    auto_dismantle_worse: bool = False
     _buff_damage: float = 0.0
 
     def __post_init__(self):
@@ -297,6 +299,8 @@ class Character:
             "bonus_resource": self.bonus_resource,
             "equipment": {k: (v.to_dict() if v else None) for k, v in self.equipment.items()},
             "inventory": [i.to_dict() for i in self.inventory],
+            "auto_sell_worse": self.auto_sell_worse,
+            "auto_dismantle_worse": self.auto_dismantle_worse,
         }
 
     @classmethod
@@ -319,6 +323,8 @@ class Character:
             bonus_attack=data.get("bonus_attack", 0),
             bonus_defense=data.get("bonus_defense", 0),
             bonus_resource=data.get("bonus_resource", 0),
+            auto_sell_worse=data.get("auto_sell_worse", False),
+            auto_dismantle_worse=data.get("auto_dismantle_worse", False),
         )
         char.equipment = {
             k: (Equipment.from_dict(v) if v else None)
@@ -347,6 +353,8 @@ class Character:
             pass  # 已在上方处理旧存档
         elif char.skill_points == 0 and char.level > 1 and len(char.skill_ranks) <= 1:
             char.skill_points = max(0, char.level - 1)
+        from systems.inventory_loot import normalize_auto_loot
+        normalize_auto_loot(char)
         return char
 
     @classmethod

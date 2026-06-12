@@ -3,7 +3,7 @@
 import random
 
 from config.classes import get_class_config, list_classes
-from config.constants import EQUIPMENT_SLOTS, MAX_FLOOR, SLOT_NAMES
+from config.constants import EQUIPMENT_SLOTS, INVENTORY_MAX, MAX_FLOOR, SLOT_NAMES
 from config.forge import FORGE_SLOT_CONFIG, format_material_bag
 from config.skills import get_class_skill_tree, get_skill
 from models.character import Character
@@ -23,6 +23,7 @@ from systems.equipment_shop import (
     sell_equipment,
 )
 from systems.forge import do_forge, format_forge_cost
+from systems.inventory_loot import add_loot_to_character, can_enter_dungeon, normalize_auto_loot
 from systems.save_manager import SaveManager
 from ui.skill_display import format_skill_rank_values
 
@@ -75,7 +76,7 @@ class GameController:
 
     def clear_floor(self, name: str, floor: int, mode: str, kills: list[dict]) -> dict:
         """实时战斗结算：按击杀列表发放奖励，推进层数，存档。"""
-        from config.constants import get_drop_chance, roll_forge_material_drops, INVENTORY_MAX
+        from config.constants import get_drop_chance, roll_forge_material_drops
         from models.equipment import generate_equipment
 
         char = self._require_char(name)
@@ -85,7 +86,8 @@ class GameController:
         total_gold = 0
         total_mats: dict[str, int] = {}
         added_drops: list[dict] = []
-        overflow = 0
+        auto_sold: list[dict] = []
+        auto_dismantled: list[dict] = []
 
         for kill in kills:
             is_boss = bool(kill.get("is_boss", False))
@@ -112,11 +114,18 @@ class GameController:
             drop_chance = get_drop_chance(is_boss, is_elite)
             if random.random() < drop_chance:
                 loot = generate_equipment(floor)
-                if len(char.inventory) < INVENTORY_MAX:
-                    char.inventory.append(loot)
-                    added_drops.append({"summary": loot.summary(), "rarity": loot.rarity})
-                else:
-                    overflow += 1
+                result = add_loot_to_character(char, loot)
+                entry = {"summary": result["summary"], "rarity": result["rarity"]}
+                if result["action"] == "kept":
+                    added_drops.append(entry)
+                elif result["action"] == "sold":
+                    auto_sold.append({**entry, "gold": result["gold"]})
+                elif result["action"] == "dismantled":
+                    auto_dismantled.append({
+                        **entry,
+                        "tier": result["tier"],
+                        "qty": result["qty"],
+                    })
 
         level_msgs = char.add_exp(total_exp)
         char.gold += total_gold
@@ -129,12 +138,17 @@ class GameController:
         char.heal_full()
         self.save_mgr.save(char)
 
+        inv_count = len(char.inventory)
         return {
             "total_exp": total_exp,
             "total_gold": total_gold,
             "total_materials": total_mats,
             "drops": added_drops,
-            "overflow_count": overflow,
+            "auto_sold": auto_sold,
+            "auto_dismantled": auto_dismantled,
+            "inventory_count": inv_count,
+            "inventory_max": INVENTORY_MAX,
+            "inventory_over_limit": inv_count > INVENTORY_MAX,
             "level_msgs": level_msgs,
             "new_floor": char.floor,
             "character": self.character_to_api(char),
@@ -146,6 +160,9 @@ class GameController:
         from models.monster import generate_monster
 
         char = self._require_char(name)
+        ok, msg = can_enter_dungeon(char)
+        if not ok:
+            raise ValueError(msg)
         if target_floor is None:
             target_floor = min(char.floor, MAX_FLOOR)
         target_floor = max(1, min(target_floor, MAX_FLOOR))
@@ -248,6 +265,9 @@ class GameController:
 
     def run_battle(self, name: str, target_floor: int | None = None) -> dict:
         char = self._require_char(name)
+        ok, msg = can_enter_dungeon(char)
+        if not ok:
+            raise ValueError(msg)
         if target_floor is None:
             target_floor = min(char.floor, MAX_FLOOR)
         io = CollectingBattleIO()
@@ -290,6 +310,25 @@ class GameController:
             char.inventory.append(old)
         self.save_mgr.save(char)
         return {"message": f"已装备 {item.name}", "character": self.character_to_api(char)}
+
+    def set_inventory_settings(
+        self,
+        name: str,
+        auto_sell_worse: bool | None = None,
+        auto_dismantle_worse: bool | None = None,
+    ) -> dict:
+        char = self._require_char(name)
+        if auto_sell_worse is not None:
+            char.auto_sell_worse = auto_sell_worse
+        if auto_dismantle_worse is not None:
+            char.auto_dismantle_worse = auto_dismantle_worse
+        if auto_sell_worse and auto_dismantle_worse is None:
+            char.auto_dismantle_worse = False
+        elif auto_dismantle_worse and auto_sell_worse is None:
+            char.auto_sell_worse = False
+        normalize_auto_loot(char)
+        self.save_mgr.save(char)
+        return {"character": self.character_to_api(char)}
 
     def sell_item(self, name: str, inventory_index: int) -> dict:
         char = self._require_char(name)
@@ -389,6 +428,7 @@ class GameController:
                 "cost": format_forge_cost(char, slot),
                 "desc": FORGE_SLOT_CONFIG.get(slot, {}).get("desc", ""),
             })
+        inv_count = len(char.inventory)
         return {
             "name": char.name,
             "class_id": char.class_id,
@@ -406,6 +446,11 @@ class GameController:
             "resource_name": char.resource_name,
             "resource": char.resource,
             "resource_max": char.resource_max,
+            "inventory_count": inv_count,
+            "inventory_max": INVENTORY_MAX,
+            "inventory_over_limit": inv_count > INVENTORY_MAX,
+            "auto_sell_worse": char.auto_sell_worse,
+            "auto_dismantle_worse": char.auto_dismantle_worse,
             "stats": {
                 "hp": char.hp,
                 "max_hp": stats.max_hp,
@@ -435,7 +480,9 @@ class GameController:
             "gold": result.get("gold", 0),
             "materials": result.get("materials", {}),
             "loot": loot,
-            "loot_overflow": result.get("loot_overflow", False),
+            "loot_action": result.get("loot_action"),
+            "loot_sold_gold": result.get("loot_sold_gold"),
+            "loot_dismantled": result.get("loot_dismantled"),
             "level_msgs": result.get("level_msgs", []),
             "timeline": timeline,
             "character": self.character_to_api(char),
@@ -445,6 +492,8 @@ class GameController:
         char = self.save_mgr.load(name)
         if not char:
             raise ValueError(f"角色 [{name}] 不存在")
+        if normalize_auto_loot(char):
+            self.save_mgr.save(char)
         return char
 
     def _pop_item(self, char: Character, index: int) -> Equipment:

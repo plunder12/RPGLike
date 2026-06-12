@@ -121,5 +121,7 @@
         }
       ]
     }
-  ]
+  ],
+  "auto_sell_worse": true,
+  "auto_dismantle_worse": false
 }

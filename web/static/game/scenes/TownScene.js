@@ -92,6 +92,7 @@ export default class TownScene extends Phaser.Scene {
       // 同步底部层数
       this._targetFloor = c.floor;
       this._floorLabel?.setText(`目标层：第 ${c.floor} 层`);
+      this._updateEnterBtn();
     } catch {
       // 静默失败，不影响正常使用
     }
@@ -106,6 +107,18 @@ export default class TownScene extends Phaser.Scene {
   }
   _getMaxHp(c) {
     return c.stats?.max_hp ?? c.max_hp ?? 0;
+  }
+
+  _invMax(c = this.character) {
+    return c?.inventory_max ?? 100;
+  }
+
+  _invCount(c = this.character) {
+    return c?.inventory_count ?? (c?.inventory?.length ?? 0);
+  }
+
+  _isInvOverLimit(c = this.character) {
+    return c?.inventory_over_limit ?? this._invCount(c) > this._invMax(c);
   }
 
   // ────────────────────────────────────────────────────────────
@@ -198,14 +211,17 @@ export default class TownScene extends Phaser.Scene {
       .on("pointerdown", () => this._changeTargetFloor(1));
 
     // 进入地牢按钮
-    const enterBtn = this.add.text(W - 24, H - 36, "⚔ 进入地牢", {
+    this._enterBtn = this.add.text(W - 24, H - 36, "⚔ 进入地牢", {
       fontFamily: FONT, fontSize: "16px", color: "#0f0e12",
       backgroundColor: "#c9a227", padding: { x: 20, y: 10 },
     }).setOrigin(1, 0.5).setDepth(3).setInteractive({ useHandCursor: true });
 
-    enterBtn.on("pointerover", () => enterBtn.setStyle({ backgroundColor: "#e8c040" }));
-    enterBtn.on("pointerout", () => enterBtn.setStyle({ backgroundColor: "#c9a227" }));
-    enterBtn.on("pointerdown", () => this._enterDungeon());
+    this._enterBtn.on("pointerover", () => {
+      if (!this._isInvOverLimit()) this._enterBtn.setStyle({ backgroundColor: "#e8c040" });
+    });
+    this._enterBtn.on("pointerout", () => this._updateEnterBtn());
+    this._enterBtn.on("pointerdown", () => this._enterDungeon());
+    this._updateEnterBtn();
 
     // 返回主菜单
     this.add.text(20, H - 36, "← 主菜单", {
@@ -220,7 +236,27 @@ export default class TownScene extends Phaser.Scene {
     this._floorLabel.setText(`目标层：第 ${this._targetFloor} 层`);
   }
 
+  _updateEnterBtn() {
+    if (!this._enterBtn) return;
+    const over = this._isInvOverLimit();
+    const max = this._invMax();
+    const count = this._invCount();
+    if (over) {
+      this._enterBtn.setText(`⚔ 背包超载 ${count}/${max}`);
+      this._enterBtn.setStyle({ backgroundColor: "#5a4040", color: "#c0a0a0" });
+    } else {
+      this._enterBtn.setText("⚔ 进入地牢");
+      this._enterBtn.setStyle({ backgroundColor: "#c9a227", color: "#0f0e12" });
+    }
+  }
+
   _enterDungeon() {
+    if (this._isInvOverLimit()) {
+      const max = this._invMax();
+      const count = this._invCount();
+      this._showToast(`背包超载（${count}/${max}），请先清理至上限内`, true);
+      return;
+    }
     this._clearContent();
     // 清理可能残留的 UI 层，避免二次进本卡死
     const dungeon = this.scene.get("DungeonScene");
@@ -362,6 +398,8 @@ export default class TownScene extends Phaser.Scene {
   _drawInventory(x, y, w, h) {
     const inv = this.character.inventory ?? [];
     const total = inv.length;
+    const invMax = this._invMax();
+    const overLimit = this._isInvOverLimit();
     const PAGE_SIZE = 7; // 行高变大，每页少一点
     const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
     const page = Math.min(this.page, pageCount - 1);
@@ -369,12 +407,16 @@ export default class TownScene extends Phaser.Scene {
     const pageItems = inv.slice(startIdx, startIdx + PAGE_SIZE);
 
     // 标题
-    const title = this.add.text(x, y + 6, `背包  ${total}/50`, {
-      fontFamily: FONT, fontSize: "13px", color: "#c9a227",
+    const titleColor = overLimit ? "#d04040" : "#c9a227";
+    const titleText = overLimit
+      ? `背包  ${total}/${invMax}（超载，无法进本）`
+      : `背包  ${total}/${invMax}`;
+    const title = this.add.text(x, y + 6, titleText, {
+      fontFamily: FONT, fontSize: "13px", color: titleColor,
     }).setDepth(3);
     this._items.push(title);
 
-    // 批量按钮
+    // 批量按钮（标题行右侧）
     const sellAll = this.add.text(x + w - 8, y + 6, "全售", {
       fontFamily: FONT, fontSize: "12px", color: "#d04040",
       backgroundColor: "#2a1818", padding: { x: 6, y: 2 },
@@ -389,6 +431,21 @@ export default class TownScene extends Phaser.Scene {
     discAll.on("pointerdown", () => this._doDiscardAll());
     this._items.push(discAll);
 
+    // 自动出售 / 自动分解（二选一）
+    const autoSellOn = !!this.character.auto_sell_worse;
+    const autoDiscOn = !!this.character.auto_dismantle_worse;
+    const mkToggle = (label, tx, on, color, bgOn, bgOff, field) => {
+      const btn = this.add.text(tx, y + 28, `${on ? "✓" : "○"} ${label}`, {
+        fontFamily: FONT, fontSize: "11px", color: on ? color : "#706880",
+        backgroundColor: on ? bgOn : bgOff, padding: { x: 5, y: 2 },
+      }).setOrigin(0, 0).setDepth(4).setInteractive({ useHandCursor: true });
+      btn.on("pointerdown", () => this._selectAutoLoot(field));
+      this._items.push(btn);
+      return btn;
+    };
+    const t1 = mkToggle("自动出售", x + 4, autoSellOn, "#d04040", "#2a1818", "#1a1820", "auto_sell_worse");
+    mkToggle("自动分解", x + 4 + t1.width + 8, autoDiscOn, "#a040d0", "#1a1828", "#141218", "auto_dismantle_worse");
+
     if (total === 0) {
       const empty = this.add.text(x + w / 2, y + h / 2, "背包空空如也", {
         fontFamily: FONT, fontSize: "14px", color: "#404050",
@@ -400,7 +457,7 @@ export default class TownScene extends Phaser.Scene {
     const rowH = 56;
     pageItems.forEach((item, i) => {
       const invIdx = startIdx + i;
-      const ry = y + 28 + i * rowH;
+      const ry = y + 48 + i * rowH;
       const col = RARITY_COLOR[item.rarity] ?? "#c0c0c0";
       const bgC = RARITY_BG[item.rarity] ?? 0x1a1a24;
 
@@ -707,12 +764,43 @@ export default class TownScene extends Phaser.Scene {
   // ────────────────────────────────────────────────────────────
   // API 操作
   // ────────────────────────────────────────────────────────────
+  async _selectAutoLoot(field) {
+    const sellOn = !!this.character.auto_sell_worse;
+    const discOn = !!this.character.auto_dismantle_worse;
+    const isOn = field === "auto_sell_worse" ? sellOn : discOn;
+    let payload;
+    if (isOn) {
+      payload = { auto_sell_worse: false, auto_dismantle_worse: false };
+    } else {
+      payload = {
+        auto_sell_worse: field === "auto_sell_worse",
+        auto_dismantle_worse: field === "auto_dismantle_worse",
+      };
+    }
+    try {
+      const r = await Api.setInventorySettings(this.character.name, payload);
+      this.character = r.character ?? await Api.getCharacter(this.character.name);
+      const labels = {
+        auto_sell_worse: "自动出售",
+        auto_dismantle_worse: "自动分解",
+      };
+      const name = labels[field] ?? "设置";
+      this._showToast(isOn ? `已关闭${name}` : `已开启${name}`);
+      this._clearContent();
+      this._refreshHeader();
+      this._updateEnterBtn();
+      this._renderTab();
+    } catch (e) {
+      this._showToast(`设置失败：${e.message}`, true);
+    }
+  }
+
   async _doEquip(index) {
     try {
       const r = await Api.equipItem(this.character.name, index);
       this.character = await Api.getCharacter(this.character.name);
       this._toast = this._showToast(r.message ?? "已装备");
-      this._clearContent(); this._refreshHeader(); this._renderTab();
+      this._clearContent(); this._refreshHeader(); this._updateEnterBtn(); this._renderTab();
     } catch (e) { this._showToast(`装备失败：${e.message}`, true); }
   }
 
@@ -721,7 +809,7 @@ export default class TownScene extends Phaser.Scene {
       const r = await Api.sellItem(this.character.name, index);
       this.character = await Api.getCharacter(this.character.name);
       this._showToast(r.message ?? "已出售");
-      this._clearContent(); this._refreshHeader(); this._renderTab();
+      this._clearContent(); this._refreshHeader(); this._updateEnterBtn(); this._renderTab();
     } catch (e) { this._showToast(`出售失败：${e.message}`, true); }
   }
 
@@ -730,7 +818,7 @@ export default class TownScene extends Phaser.Scene {
       const r = await Api.dismantleItem(this.character.name, index);
       this.character = await Api.getCharacter(this.character.name);
       this._showToast(r.message ?? "已分解");
-      this._clearContent(); this._refreshHeader(); this._renderTab();
+      this._clearContent(); this._refreshHeader(); this._updateEnterBtn(); this._renderTab();
     } catch (e) { this._showToast(`分解失败：${e.message}`, true); }
   }
 
@@ -739,7 +827,7 @@ export default class TownScene extends Phaser.Scene {
       const r = await Api.sellAll(this.character.name);
       this.character = await Api.getCharacter(this.character.name);
       this._showToast(r.message ?? "全部出售");
-      this._clearContent(); this._refreshHeader(); this._renderTab();
+      this._clearContent(); this._refreshHeader(); this._updateEnterBtn(); this._renderTab();
     } catch (e) { this._showToast(`失败：${e.message}`, true); }
   }
 
@@ -748,7 +836,7 @@ export default class TownScene extends Phaser.Scene {
       const r = await Api.dismantleAll(this.character.name);
       this.character = await Api.getCharacter(this.character.name);
       this._showToast(r.message ?? "全部分解");
-      this._clearContent(); this._refreshHeader(); this._renderTab();
+      this._clearContent(); this._refreshHeader(); this._updateEnterBtn(); this._renderTab();
     } catch (e) { this._showToast(`失败：${e.message}`, true); }
   }
 

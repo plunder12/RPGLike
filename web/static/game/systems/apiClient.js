@@ -45,6 +45,8 @@ export const Api = {
   sellAll: (name) => post(`/characters/${enc(name)}/inventory/sell-all`, {}),
   dismantleAll: (name) =>
     post(`/characters/${enc(name)}/inventory/dismantle-all`, {}),
+  setInventorySettings: (name, settings) =>
+    post(`/characters/${enc(name)}/inventory/settings`, settings),
 
   // ── 技能 ──
   getSkills: (name) => req(`/characters/${enc(name)}/skills`),

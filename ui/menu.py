@@ -225,8 +225,12 @@ class GameMenu:
                 print(msg)
             if result.get("loot"):
                 print(f"掉落装备: {result['loot'].summary()}")
-                if result.get("loot_overflow"):
-                    print("背包已满，装备未拾取（请整理背包）。")
+                action = result.get("loot_action")
+                if action == "sold":
+                    print(f"（自动出售，+{result.get('loot_sold_gold', 0)} 金币）")
+                elif action == "dismantled":
+                    d = result.get("loot_dismantled") or {}
+                    print(f"（自动分解，+{d.get('qty', 0)} 个{d.get('tier', '')}材料）")
         self._auto_save()
 
     def _choose_farm_floor(self, cleared: int) -> int | None:

@@ -6,11 +6,11 @@ import time
 from config.constants import (
     BATTLE_ACTION_DELAY,
     BATTLE_TURN_DELAY,
-    INVENTORY_MAX,
     MAX_FLOOR,
     get_drop_chance,
     roll_forge_material_drops,
 )
+from systems.inventory_loot import add_loot_to_character
 from models.character import Character
 from models.equipment import generate_equipment
 from models.monster import Monster, generate_monster
@@ -253,11 +253,16 @@ class BattleSystem:
         drop_chance = get_drop_chance(monster.is_boss, monster.is_elite)
         if random.random() < drop_chance:
             loot = generate_equipment(battle_floor)
+            loot_result = add_loot_to_character(character, loot)
             result["loot"] = loot
-            if len(character.inventory) < INVENTORY_MAX:
-                character.inventory.append(loot)
-            else:
-                result["loot_overflow"] = True
+            result["loot_action"] = loot_result["action"]
+            if loot_result["action"] == "sold":
+                result["loot_sold_gold"] = loot_result["gold"]
+            elif loot_result["action"] == "dismantled":
+                result["loot_dismantled"] = {
+                    "tier": loot_result["tier"],
+                    "qty": loot_result["qty"],
+                }
 
         if advance_floor:
             character.highest_floor = max(character.highest_floor, battle_floor)
