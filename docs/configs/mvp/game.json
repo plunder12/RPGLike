@@ -1,0 +1,34 @@
+{
+  "game_version": "0.1.0-mvp",
+  "combat_mechanics": {
+    "armor_reduction_constant": 50,
+    "max_cooldown_reduction_pct": 0.75,
+    "base_crit_damage_pct": 0.50,
+    "damage_number_format_threshold": 10000
+  },
+  "character_design": {
+    "base_stats": {
+      "base_hp": 100,
+      "base_attack": 10,
+      "base_armor": 5,
+      "move_speed": 400
+    },
+    "growth_per_level": {
+      "hp": 20,
+      "attack": 2,
+      "armor": 1
+    }
+  },
+  "scaling_formula": {
+    "hp_scale_per_floor": 1.15,
+    "damage_reduction_per_floor": 0.02
+  },
+  "progression": {
+    "base_exp": 100,
+    "exp_growth": 1.45,
+    "max_floor_mvp": 10,
+    "boss_every_n_floors": 10,
+    "elite_spawn_chance": 0.15,
+    "farm_floor_reward_ratio": 0.5
+  }
+}

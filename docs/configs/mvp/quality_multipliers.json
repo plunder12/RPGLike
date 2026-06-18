@@ -1,0 +1,39 @@
+{
+  "normal": {
+    "id": 1,
+    "display_name": "普通",
+    "color": "#ffffff",
+    "drop_weight": 50,
+    "base_stat_multiplier": 1.0,
+    "affix_count": [1, 2],
+    "has_legendary_effect": false
+  },
+  "magic": {
+    "id": 2,
+    "display_name": "魔法",
+    "color": "#4488ff",
+    "drop_weight": 30,
+    "base_stat_multiplier": 1.2,
+    "affix_count": [2, 3],
+    "has_legendary_effect": false
+  },
+  "rare": {
+    "id": 3,
+    "display_name": "稀有",
+    "color": "#ffdd00",
+    "drop_weight": 15,
+    "base_stat_multiplier": 1.5,
+    "affix_count": [3, 4],
+    "has_legendary_effect": false
+  },
+  "legendary": {
+    "id": 4,
+    "display_name": "传奇",
+    "color": "#ff8800",
+    "drop_weight": 5,
+    "base_stat_multiplier": 2.0,
+    "affix_count": [4, 5],
+    "has_legendary_effect": true,
+    "mvp_note": "v0.1 仅占位 legendary_id 字段，特效 v0.2"
+  }
+}

@@ -1,0 +1,99 @@
+{
+    "game_version": "1.0.0",
+    "combat_mechanics": {
+      "armor_reduction_constant": 50,
+      "max_cooldown_reduction_pct": 0.75,
+      "base_crit_damage_pct": 0.50,
+      "damage_number_format_threshold": 10000
+    },
+    "character_design": {
+      "base_stats": {
+        "base_hp": 100,
+        "base_attack": 10,
+        "base_armor": 5,
+        "move_speed": 400
+      },
+      "growth_per_level": {
+        "hp": 20,
+        "attack": 2,
+        "armor": 1
+      }
+    },
+    "monster_design": {
+      "archetypes": {
+        "mob_melee": {
+          "id": 1,
+          "type": "melee",
+          "hp_multiplier": 1.0,
+          "speed": 150,
+          "behavior": "chase_player"
+        },
+        "mob_ranged": {
+          "id": 2,
+          "type": "ranged",
+          "hp_multiplier": 0.8,
+          "speed": 100,
+          "behavior": "keep_distance"
+        },
+        "elite": {
+          "id": 3,
+          "type": "mixed",
+          "hp_multiplier": 5.0,
+          "speed": 180,
+          "affix_count": [1, 2]
+        },
+        "boss": {
+          "id": 4,
+          "type": "boss",
+          "hp_multiplier": 50.0,
+          "speed": 200,
+          "immunity": ["knockback", "freeze"]
+        }
+      },
+      "elite_affixes": {
+        "vampiric": { "description": "Heals for 50% of damage dealt", "weight": 100 },
+        "molten": { "description": "Leaves a trail of fire dealing continuous damage", "weight": 80 },
+        "frozen": { "description": "Spawns ice crystals that freeze player on explosion", "weight": 60 }
+      },
+      "scaling_formula": {
+        "hp_scale_per_floor": 1.15,
+        "damage_reduction_per_floor": 0.02
+      }
+    },
+    "quality_multipliers": {
+      "normal": { "id": 1, "color": "white", "base_stat_multiplier": 1.0, "affix_count": 0, "has_legendary_effect": false },
+      "magic": { "id": 2, "color": "blue", "base_stat_multiplier": 1.2, "affix_count": [1, 2], "has_legendary_effect": false },
+      "rare": { "id": 3, "color": "yellow", "base_stat_multiplier": 1.5, "affix_count": [3, 4], "has_legendary_effect": false },
+      "legendary": { "id": 4, "color": "orange", "base_stat_multiplier": 2.0, "affix_count": [4], "has_legendary_effect": true },
+      "artifact": { "id": 5, "color": "red", "base_stat_multiplier": 2.5, "affix_count": [4], "has_legendary_effect": true }
+    },
+    "damage_zones": {
+      "base": ["base_attack"],
+      "zone_A_global": ["inc_phys_dmg", "inc_fire_dmg", "inc_melee_dmg", "inc_ranged_dmg", "inc_global_atk"],
+      "zone_B_conditional": ["inc_dmg_to_boss", "inc_dmg_to_elite", "inc_dmg_full_hp"],
+      "zone_C_skill": ["inc_core_skill_dmg", "inc_specific_skill_dmg"],
+      "zone_D_crit": ["crit_chance", "crit_damage"],
+      "zone_E_independent": ["legendary_multiplier_1", "legendary_multiplier_2"]
+    },
+    "equipment_slots": {
+      "main_hand": { "base_stat": "base_attack", "allowed_affixes": ["inc_phys_dmg", "inc_fire_dmg", "crit_damage", "attack_speed"], "weight": 100 },
+      "off_hand": { "base_stat": "base_attack", "allowed_affixes": ["crit_chance", "cooldown_reduction", "skill_level_up"], "weight": 80 },
+      "helmet": { "base_stat": "base_hp", "allowed_affixes": ["cooldown_reduction", "inc_max_hp", "all_resistances"], "weight": 100 },
+      "chest": { "base_stat": "base_armor", "allowed_affixes": ["damage_reduction", "inc_max_hp", "inc_armor"], "weight": 100 },
+      "pants": { "base_stat": "base_hp", "allowed_affixes": ["dodge_chance", "hp_regen", "trigger_on_hit"], "weight": 90 },
+      "shoulders": { "base_stat": "base_armor", "allowed_affixes": ["area_damage", "inc_specific_skill_dmg", "all_resistances"], "weight": 90 },
+      "gloves": { "base_stat": "base_attack", "allowed_affixes": ["attack_speed", "crit_chance", "cast_speed"], "weight": 100 },
+      "boots": { "base_stat": "base_hp", "allowed_affixes": ["movement_speed", "dodge_chance", "crowd_control_reduction"], "weight": 100 },
+      "belt": { "base_stat": "base_hp", "allowed_affixes": ["potion_effectiveness", "inc_max_hp", "pickup_radius"], "weight": 80 },
+      "amulet": { "base_stat": "all_attributes", "allowed_affixes": ["global_independent_multiplier", "core_skill_level_up", "crit_damage"], "weight": 70 },
+      "ring_1": { "base_stat": "armor_penetration", "allowed_affixes": ["crit_chance", "crit_damage", "inc_dmg_to_boss"], "weight": 80 },
+      "ring_2": { "base_stat": "armor_penetration", "allowed_affixes": ["crit_chance", "crit_damage", "inc_dmg_to_elite"], "weight": 80 }
+    },
+    "affix_pool_data": {
+      "attack_speed": { "min_roll": 0.05, "max_roll": 0.15, "growth_per_level": 0.005 },
+      "crit_chance": { "min_roll": 0.02, "max_roll": 0.08, "growth_per_level": 0.002 },
+      "crit_damage": { "min_roll": 0.10, "max_roll": 0.30, "growth_per_level": 0.015 },
+      "movement_speed": { "min_roll": 0.05, "max_roll": 0.12, "growth_per_level": 0.001 },
+      "inc_dmg_to_boss": { "min_roll": 0.10, "max_roll": 0.25, "growth_per_level": 0.01 }
+    }
+  }

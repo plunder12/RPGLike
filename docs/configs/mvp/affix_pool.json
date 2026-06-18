@@ -1,0 +1,72 @@
+{
+  "attack": {
+    "display_name": "攻击",
+    "is_percent": false,
+    "min_roll": 8,
+    "max_roll": 24,
+    "growth_per_level": 1
+  },
+  "defense": {
+    "display_name": "防御",
+    "is_percent": false,
+    "min_roll": 4,
+    "max_roll": 14,
+    "growth_per_level": 0.5
+  },
+  "max_hp": {
+    "display_name": "生命",
+    "is_percent": false,
+    "min_roll": 30,
+    "max_roll": 90,
+    "growth_per_level": 2
+  },
+  "crit_rate": {
+    "display_name": "暴击率",
+    "is_percent": true,
+    "min_roll": 0.02,
+    "max_roll": 0.08,
+    "growth_per_level": 0.002
+  },
+  "crit_damage": {
+    "display_name": "暴击伤害",
+    "is_percent": true,
+    "min_roll": 0.10,
+    "max_roll": 0.30,
+    "growth_per_level": 0.015
+  },
+  "skill_damage": {
+    "display_name": "技能伤害",
+    "is_percent": true,
+    "min_roll": 0.06,
+    "max_roll": 0.15,
+    "growth_per_level": 0.005
+  },
+  "attack_speed": {
+    "display_name": "攻击速度",
+    "is_percent": true,
+    "min_roll": 0.05,
+    "max_roll": 0.15,
+    "growth_per_level": 0.005
+  },
+  "movement_speed": {
+    "display_name": "移速",
+    "is_percent": true,
+    "min_roll": 0.05,
+    "max_roll": 0.12,
+    "growth_per_level": 0.001
+  },
+  "damage_reduction": {
+    "display_name": "减伤",
+    "is_percent": true,
+    "min_roll": 0.03,
+    "max_roll": 0.08,
+    "growth_per_level": 0.002
+  },
+  "dodge_chance": {
+    "display_name": "闪避",
+    "is_percent": true,
+    "min_roll": 0.02,
+    "max_roll": 0.06,
+    "growth_per_level": 0.001
+  }
+}

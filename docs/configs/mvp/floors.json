@@ -1,0 +1,27 @@
+{
+  "floor_templates": {
+    "default": {
+      "waves": [
+        { "delay_ms": 0, "spawns": [{ "archetype": "mob_melee", "count": 4 }] },
+        { "delay_ms": 8000, "spawns": [{ "archetype": "mob_melee", "count": 3 }, { "archetype": "mob_ranged", "count": 2 }] },
+        { "delay_ms": 16000, "spawns": [{ "archetype": "mob_melee", "count": 2 }, { "archetype": "mob_ranged", "count": 3 }] }
+      ],
+      "boss_archetype": null
+    },
+    "boss_floor": {
+      "waves": [
+        { "delay_ms": 0, "spawns": [{ "archetype": "mob_melee", "count": 3 }] }
+      ],
+      "boss_archetype": "boss"
+    }
+  },
+  "floor_overrides": {
+    "10": { "template": "boss_floor" }
+  },
+  "rarity_unlock_by_floor": {
+    "1": ["normal"],
+    "4": ["normal", "magic"],
+    "7": ["normal", "magic", "rare"],
+    "10": ["normal", "magic", "rare", "legendary"]
+  }
+}

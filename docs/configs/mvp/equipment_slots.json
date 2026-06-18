@@ -1,0 +1,40 @@
+{
+  "slots": {
+    "weapon": {
+      "display_name": "武器",
+      "maps_to_full": "main_hand",
+      "base_stat": "base_attack",
+      "allowed_affixes": ["attack", "crit_rate", "crit_damage", "skill_damage"]
+    },
+    "helm": {
+      "display_name": "头盔",
+      "maps_to_full": "helmet",
+      "base_stat": "base_hp",
+      "allowed_affixes": ["max_hp", "defense", "crit_rate"]
+    },
+    "chest": {
+      "display_name": "胸甲",
+      "maps_to_full": "chest",
+      "base_stat": "base_armor",
+      "allowed_affixes": ["defense", "max_hp", "damage_reduction"]
+    },
+    "gloves": {
+      "display_name": "手套",
+      "maps_to_full": "gloves",
+      "base_stat": "base_attack",
+      "allowed_affixes": ["attack", "crit_rate", "attack_speed"]
+    },
+    "boots": {
+      "display_name": "靴子",
+      "maps_to_full": "boots",
+      "base_stat": "base_hp",
+      "allowed_affixes": ["max_hp", "movement_speed", "dodge_chance"]
+    },
+    "ring": {
+      "display_name": "戒指",
+      "maps_to_full": "ring_1",
+      "base_stat": "crit_rate",
+      "allowed_affixes": ["crit_rate", "crit_damage", "attack"]
+    }
+  }
+}

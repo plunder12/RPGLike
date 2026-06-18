@@ -1,0 +1,48 @@
+{
+  "classes": {
+    "barbarian": {
+      "display_name": "野蛮人",
+      "resource_type": "rage",
+      "resource_max": 100,
+      "skill_slots": ["whirlwind", "war_cry"]
+    }
+  },
+  "skills": {
+    "basic_attack": {
+      "id": "basic_attack",
+      "name": "普通攻击",
+      "type": "active",
+      "cooldown_ms": 450,
+      "resource_cost": 0,
+      "resource_gain": 10,
+      "damage_multiplier": 1.0,
+      "range": 72
+    },
+    "whirlwind": {
+      "id": "whirlwind",
+      "name": "旋风斩",
+      "type": "active",
+      "class_id": "barbarian",
+      "cooldown_ms": 2000,
+      "resource_cost": 18,
+      "damage_multiplier": 1.5,
+      "range": 96,
+      "tags": ["aoe"],
+      "rank_bonus": {
+        "damage_multiplier": 0.25,
+        "resource_cost": -2
+      }
+    },
+    "war_cry": {
+      "id": "war_cry",
+      "name": "战吼",
+      "type": "active",
+      "class_id": "barbarian",
+      "cooldown_ms": 3000,
+      "resource_cost": 12,
+      "damage_multiplier": 0,
+      "buff_damage": 0.25,
+      "buff_duration_ms": 5000
+    }
+  }
+}

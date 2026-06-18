@@ -1,0 +1,61 @@
+{
+  "archetypes": {
+    "mob_melee": {
+      "id": "mob_melee",
+      "display_name": "史莱姆",
+      "type": "melee",
+      "hp_multiplier": 1.0,
+      "attack_multiplier": 1.0,
+      "speed": 150,
+      "attack_range": 48,
+      "attack_cd_ms": 1200,
+      "behavior": "chase_player"
+    },
+    "mob_ranged": {
+      "id": "mob_ranged",
+      "display_name": "投弹哥布林",
+      "type": "ranged",
+      "hp_multiplier": 0.8,
+      "attack_multiplier": 0.9,
+      "speed": 100,
+      "attack_range": 220,
+      "attack_cd_ms": 1800,
+      "behavior": "keep_distance",
+      "preferred_distance": 160
+    },
+    "elite": {
+      "id": "elite",
+      "display_name": "精英",
+      "type": "mixed",
+      "hp_multiplier": 5.0,
+      "attack_multiplier": 1.5,
+      "speed": 180,
+      "attack_range": 48,
+      "attack_cd_ms": 1000,
+      "behavior": "chase_player",
+      "mvp_note": "v0.1 仅 HP 倍率 + 描边，词条 v0.2 实装"
+    },
+    "boss": {
+      "id": "boss",
+      "display_name": "层主",
+      "type": "boss",
+      "hp_multiplier": 50.0,
+      "attack_multiplier": 2.0,
+      "speed": 120,
+      "attack_range": 64,
+      "attack_cd_ms": 1500,
+      "behavior": "boss_phase",
+      "immunity": ["knockback", "freeze"],
+      "phases_mvp": [
+        {
+          "hp_pct_above": 0.5,
+          "skills": ["charge", "melee_sweep"]
+        },
+        {
+          "hp_pct_above": 0.0,
+          "skills": ["charge", "fan_aoe"]
+        }
+      ]
+    }
+  }
+}
